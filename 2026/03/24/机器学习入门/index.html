@@ -1,29 +1,39 @@
 <!DOCTYPE html>
 <html>
 <head>
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']],
+      packages: {'[+]': ['ams']}   // ⭐ 关键：启用 ams
+    }
+  };
+</script>
+
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <meta charset="utf-8">
   
   
-  <title>机器学习基础（一）：从向量到矩阵变换 | Hexo</title>
+  <title>机器学习基础（一）：从向量到矩阵变换 | 忤逆的学习笔记</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="description" content="机器学习入门：从向量到矩阵变换一、数据的本质：向量在机器学习中，所有数据本质上都可以表示为向量。 例如： 123身高 &#x3D; 180体重 &#x3D; 70年龄 &#x3D; 20  可以表示为一个向量： 1x &#x3D; [180, 70, 20]  向量的本质是：  按顺序排列的一组数值，用于描述一个对象的特征   二、模型的本质：矩阵如果说向量表示“数据”，那么矩阵表示“对数据的处理方式”。 矩阵可以看作是按行或按列组织起">
+  <meta name="description" content="机器学习入门：从向量到矩阵变换 一、数据的本质：向量 在机器学习中，所有数据本质上都可以表示为向量。 例如： 123身高 &#x3D; 180体重 &#x3D; 70年龄 &#x3D; 20 可以表示为一个向量： 1x &#x3D; [180, 70, 20] 向量的本质是：  按顺序排列的一组数值，用于描述一个对象的特征   二、模型的本质：矩阵 如果说向量表示“数据”，那么矩阵表示“对数据的处理方式”。 矩阵可以看作是按行或按列组织">
 <meta property="og:type" content="article">
 <meta property="og:title" content="机器学习基础（一）：从向量到矩阵变换">
-<meta property="og:url" content="http://example.com/2026/03/24/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8/index.html">
-<meta property="og:site_name" content="Hexo">
-<meta property="og:description" content="机器学习入门：从向量到矩阵变换一、数据的本质：向量在机器学习中，所有数据本质上都可以表示为向量。 例如： 123身高 &#x3D; 180体重 &#x3D; 70年龄 &#x3D; 20  可以表示为一个向量： 1x &#x3D; [180, 70, 20]  向量的本质是：  按顺序排列的一组数值，用于描述一个对象的特征   二、模型的本质：矩阵如果说向量表示“数据”，那么矩阵表示“对数据的处理方式”。 矩阵可以看作是按行或按列组织起">
-<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://paywqiao-max.github.io/2026/03/24/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8/index.html">
+<meta property="og:site_name" content="忤逆的学习笔记">
+<meta property="og:description" content="机器学习入门：从向量到矩阵变换 一、数据的本质：向量 在机器学习中，所有数据本质上都可以表示为向量。 例如： 123身高 &#x3D; 180体重 &#x3D; 70年龄 &#x3D; 20 可以表示为一个向量： 1x &#x3D; [180, 70, 20] 向量的本质是：  按顺序排列的一组数值，用于描述一个对象的特征   二、模型的本质：矩阵 如果说向量表示“数据”，那么矩阵表示“对数据的处理方式”。 矩阵可以看作是按行或按列组织">
+<meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2026-03-24T13:41:02.000Z">
 <meta property="article:modified_time" content="2026-03-27T13:04:19.867Z">
-<meta property="article:author" content="John Doe">
+<meta property="article:author" content="忤逆">
 <meta property="article:tag" content="NumPy">
 <meta property="article:tag" content="学习记录">
 <meta property="article:tag" content="机器学习">
 <meta property="article:tag" content="线性代数">
 <meta name="twitter:card" content="summary">
   
-    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+    <link rel="alternate" href="/atom.xml" title="忤逆的学习笔记" type="application/atom+xml">
   
   
     <link rel="shortcut icon" href="/favicon.png">
@@ -54,7 +64,7 @@
   <div id="header-outer" class="outer">
     <div id="header-title" class="inner">
       <h1 id="logo-wrap">
-        <a href="/" id="logo">Hexo</a>
+        <a href="/" id="logo">忤逆的学习笔记</a>
       </h1>
       
     </div>
@@ -70,12 +80,12 @@
       <nav id="sub-nav">
         
         
-          <a class="nav-icon" href="/atom.xml" title="RSS Feed"><span class="fa fa-rss"></span></a>
+          <a class="nav-icon" href="/atom.xml" title="RSS 订阅"><span class="fa fa-rss"></span></a>
         
-        <a class="nav-icon nav-search-btn" title="Search"><span class="fa fa-search"></span></a>
+        <a class="nav-icon nav-search-btn" title="搜索"><span class="fa fa-search"></span></a>
       </nav>
       <div id="search-form-wrap">
-        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="搜索"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://paywqiao-max.github.io"></form>
       </div>
     </div>
   </div>
@@ -108,42 +118,47 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        <h1 id="机器学习入门：从向量到矩阵变换"><a href="#机器学习入门：从向量到矩阵变换" class="headerlink" title="机器学习入门：从向量到矩阵变换"></a>机器学习入门：从向量到矩阵变换</h1><h2 id="一、数据的本质：向量"><a href="#一、数据的本质：向量" class="headerlink" title="一、数据的本质：向量"></a>一、数据的本质：向量</h2><p>在机器学习中，所有数据本质上都可以表示为向量。</p>
+        <h1>机器学习入门：从向量到矩阵变换</h1>
+<h2 id="一、数据的本质：向量">一、数据的本质：向量</h2>
+<p>在机器学习中，所有数据本质上都可以表示为向量。</p>
 <p>例如：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">身高 = 180</span><br><span class="line">体重 = 70</span><br><span class="line">年龄 = 20</span><br></pre></td></tr></table></figure>
-
 <p>可以表示为一个向量：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">x = [180, 70, 20]</span><br></pre></td></tr></table></figure>
-
 <p>向量的本质是：</p>
 <blockquote>
 <p>按顺序排列的一组数值，用于描述一个对象的特征</p>
 </blockquote>
 <hr>
-<h2 id="二、模型的本质：矩阵"><a href="#二、模型的本质：矩阵" class="headerlink" title="二、模型的本质：矩阵"></a>二、模型的本质：矩阵</h2><p>如果说向量表示“数据”，那么矩阵表示“对数据的处理方式”。</p>
+<h2 id="二、模型的本质：矩阵">二、模型的本质：矩阵</h2>
+<p>如果说向量表示“数据”，那么矩阵表示“对数据的处理方式”。</p>
 <p>矩阵可以看作是按行或按列组织起来的一组向量，本质是一个二维数组。</p>
 <p>在机器学习中，矩阵通常用于表示模型的参数。</p>
 <hr>
-<h2 id="三、点积：最基础的计算方式"><a href="#三、点积：最基础的计算方式" class="headerlink" title="三、点积：最基础的计算方式"></a>三、点积：最基础的计算方式</h2><p>给定一个权重向量：</p>
+<h2 id="三、点积：最基础的计算方式">三、点积：最基础的计算方式</h2>
+<p>给定一个权重向量：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">w = [0.5, 0.3, 0.2]</span><br></pre></td></tr></table></figure>
-
 <p>和输入向量：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">x = [180, 70, 20]</span><br></pre></td></tr></table></figure>
-
 <p>它们的点积为：</p>
-<p>$$<br> y &#x3D; w \cdot x<br>$$</p>
+<p>$$<br>
+y = w \cdot x<br>
+$$</p>
 <p>点积的本质是：</p>
 <blockquote>
 <p>对输入数据进行加权求和</p>
 </blockquote>
 <p>即：</p>
 <ul>
-<li>每个特征乘以对应权重  </li>
+<li>每个特征乘以对应权重</li>
 <li>然后相加得到结果</li>
 </ul>
 <hr>
-<h2 id="四、模型的形式：从输入到输出"><a href="#四、模型的形式：从输入到输出" class="headerlink" title="四、模型的形式：从输入到输出"></a>四、模型的形式：从输入到输出</h2><p>在最简单的情况下，一个模型可以表示为：</p>
-<p>$$<br>y &#x3D; W x + b<br>$$</p>
+<h2 id="四、模型的形式：从输入到输出">四、模型的形式：从输入到输出</h2>
+<p>在最简单的情况下，一个模型可以表示为：</p>
+<p>$$<br>
+y = W x + b<br>
+$$</p>
 <p>其中：</p>
 <ul>
 <li>x：输入向量（数据）</li>
@@ -156,13 +171,15 @@
 <p>使用矩阵对输入数据进行一次线性变换</p>
 </blockquote>
 <hr>
-<h2 id="五、机器学习的核心任务"><a href="#五、机器学习的核心任务" class="headerlink" title="五、机器学习的核心任务"></a>五、机器学习的核心任务</h2><p>机器学习的目标并不是“随便找一个矩阵”，而是：</p>
+<h2 id="五、机器学习的核心任务">五、机器学习的核心任务</h2>
+<p>机器学习的目标并不是“随便找一个矩阵”，而是：</p>
 <blockquote>
 <p>通过训练数据，找到一个最优的矩阵 W，使得模型输出尽可能接近真实结果</p>
 </blockquote>
 <p>这个过程通常通过优化算法（例如梯度下降）来完成。</p>
 <hr>
-<h2 id="六、总结"><a href="#六、总结" class="headerlink" title="六、总结"></a>六、总结</h2><p>可以用一句话概括机器学习的基本结构：</p>
+<h2 id="六、总结">六、总结</h2>
+<p>可以用一句话概括机器学习的基本结构：</p>
 <blockquote>
 <p>数据是向量，模型是矩阵，对数据进行变换以得到结果</p>
 </blockquote>
@@ -174,7 +191,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2026/03/24/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8/" data-id="cuidzHU7MtzJ-SYyUGRckvwyT" data-title="机器学习基础（一）：从向量到矩阵变换" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/03/24/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8/" data-id="cuid0HQeCpjPL_uTOKSmLj3qt" data-title="机器学习基础（一）：从向量到矩阵变换" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -187,7 +204,7 @@
 <nav id="article-nav">
   
     <a href="/2026/03/25/DAY2-%E7%9F%A9%E9%98%B5%E5%9F%BA%E7%A1%80%E4%B8%8E%E5%87%A0%E4%BD%95%E6%84%8F%E4%B9%89/" id="article-nav-newer" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Newer</strong>
+      <strong class="article-nav-caption">前一篇</strong>
       <div class="article-nav-title">
         
           机器学习基础（二）：向量空间与线性代数入门
@@ -208,7 +225,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Categories</h3>
+    <h3 class="widget-title">分类</h3>
     <div class="widget">
       <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a></li></ul>
     </div>
@@ -218,7 +235,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Tags</h3>
+    <h3 class="widget-title">标签</h3>
     <div class="widget">
       <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/NumPy/" rel="tag">NumPy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" rel="tag">学习记录</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" rel="tag">数学基础</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" rel="tag">线性代数</a></li></ul>
     </div>
@@ -228,7 +245,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Tag Cloud</h3>
+    <h3 class="widget-title">标签云</h3>
     <div class="widget tagcloud">
       <a href="/tags/NumPy/" style="font-size: 20px;">NumPy</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" style="font-size: 20px;">学习记录</a> <a href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" style="font-size: 10px;">数学基础</a> <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" style="font-size: 20px;">机器学习</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" style="font-size: 20px;">线性代数</a>
     </div>
@@ -237,9 +254,9 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Archives</h3>
+    <h3 class="widget-title">归档</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2026/03/">March 2026</a></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2026/03/">三月 2026</a></li></ul>
     </div>
   </div>
 
@@ -247,7 +264,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Recent Posts</h3>
+    <h3 class="widget-title">最新文章</h3>
     <div class="widget">
       <ul>
         
@@ -276,7 +293,7 @@
   <div class="outer">
     <div id="footer-info" class="inner">
       
-      &copy; 2026 John Doe<br>
+      &copy; 2026 忤逆<br>
       Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
     </div>
   </div>

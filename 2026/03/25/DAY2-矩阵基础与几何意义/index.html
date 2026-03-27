@@ -1,28 +1,38 @@
 <!DOCTYPE html>
 <html>
 <head>
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']],
+      packages: {'[+]': ['ams']}   // ⭐ 关键：启用 ams
+    }
+  };
+</script>
+
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <meta charset="utf-8">
   
   
-  <title>机器学习基础（二）：向量空间与线性代数入门 | Hexo</title>
+  <title>机器学习基础（二）：向量空间与线性代数入门 | 忤逆的学习笔记</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="description" content="一、今日学习目标1、掌握矩阵核心算法：加法，数乘，矩阵乘法，转置2、理解矩阵乘法的几何意义3、 用NumPy实现所有的基础矩阵运算 二、矩阵的核心算法1、矩阵加法本质： 矩阵的对应位置相加  条件： 矩阵的行列数必须完全相同  公式：若：A &#x3D; (ai,j)，B&#x3D;(bi,j)则：C &#x3D; A + B &#x3D; (ai,j + bi,j) 例如：$$A&#x3D;\b">
+  <meta name="description" content="一、今日学习目标 1、掌握矩阵核心算法：加法，数乘，矩阵乘法，转置 2、理解矩阵乘法的几何意义 3、 用NumPy实现所有的基础矩阵运算  二、矩阵的核心算法 1、矩阵加法 本质：  矩阵的对应位置相加  条件：  矩阵的行列数必须完全相同  公式： 若：A &#x3D; (ai,j)，B&#x3D;(bi,j) 则：C &#x3D; A + B &#x3D; (ai,j + bi,j) 例如： $$ A&#x3D; \begin{bmatrix">
 <meta property="og:type" content="article">
 <meta property="og:title" content="机器学习基础（二）：向量空间与线性代数入门">
-<meta property="og:url" content="http://example.com/2026/03/25/DAY2-%E7%9F%A9%E9%98%B5%E5%9F%BA%E7%A1%80%E4%B8%8E%E5%87%A0%E4%BD%95%E6%84%8F%E4%B9%89/index.html">
-<meta property="og:site_name" content="Hexo">
-<meta property="og:description" content="一、今日学习目标1、掌握矩阵核心算法：加法，数乘，矩阵乘法，转置2、理解矩阵乘法的几何意义3、 用NumPy实现所有的基础矩阵运算 二、矩阵的核心算法1、矩阵加法本质： 矩阵的对应位置相加  条件： 矩阵的行列数必须完全相同  公式：若：A &#x3D; (ai,j)，B&#x3D;(bi,j)则：C &#x3D; A + B &#x3D; (ai,j + bi,j) 例如：$$A&#x3D;\b">
-<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://paywqiao-max.github.io/2026/03/25/DAY2-%E7%9F%A9%E9%98%B5%E5%9F%BA%E7%A1%80%E4%B8%8E%E5%87%A0%E4%BD%95%E6%84%8F%E4%B9%89/index.html">
+<meta property="og:site_name" content="忤逆的学习笔记">
+<meta property="og:description" content="一、今日学习目标 1、掌握矩阵核心算法：加法，数乘，矩阵乘法，转置 2、理解矩阵乘法的几何意义 3、 用NumPy实现所有的基础矩阵运算  二、矩阵的核心算法 1、矩阵加法 本质：  矩阵的对应位置相加  条件：  矩阵的行列数必须完全相同  公式： 若：A &#x3D; (ai,j)，B&#x3D;(bi,j) 则：C &#x3D; A + B &#x3D; (ai,j + bi,j) 例如： $$ A&#x3D; \begin{bmatrix">
+<meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2026-03-25T14:52:23.000Z">
 <meta property="article:modified_time" content="2026-03-27T13:04:58.763Z">
-<meta property="article:author" content="John Doe">
+<meta property="article:author" content="忤逆">
 <meta property="article:tag" content="NumPy">
 <meta property="article:tag" content="学习记录">
 <meta property="article:tag" content="线性代数">
 <meta name="twitter:card" content="summary">
   
-    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+    <link rel="alternate" href="/atom.xml" title="忤逆的学习笔记" type="application/atom+xml">
   
   
     <link rel="shortcut icon" href="/favicon.png">
@@ -53,7 +63,7 @@
   <div id="header-outer" class="outer">
     <div id="header-title" class="inner">
       <h1 id="logo-wrap">
-        <a href="/" id="logo">Hexo</a>
+        <a href="/" id="logo">忤逆的学习笔记</a>
       </h1>
       
     </div>
@@ -69,12 +79,12 @@
       <nav id="sub-nav">
         
         
-          <a class="nav-icon" href="/atom.xml" title="RSS Feed"><span class="fa fa-rss"></span></a>
+          <a class="nav-icon" href="/atom.xml" title="RSS 订阅"><span class="fa fa-rss"></span></a>
         
-        <a class="nav-icon nav-search-btn" title="Search"><span class="fa fa-search"></span></a>
+        <a class="nav-icon nav-search-btn" title="搜索"><span class="fa fa-search"></span></a>
       </nav>
       <div id="search-form-wrap">
-        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="搜索"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://paywqiao-max.github.io"></form>
       </div>
     </div>
   </div>
@@ -107,176 +117,338 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        <h2 id="一、今日学习目标"><a href="#一、今日学习目标" class="headerlink" title="一、今日学习目标"></a>一、今日学习目标</h2><h3 id="1、掌握矩阵核心算法：加法，数乘，矩阵乘法，转置"><a href="#1、掌握矩阵核心算法：加法，数乘，矩阵乘法，转置" class="headerlink" title="1、掌握矩阵核心算法：加法，数乘，矩阵乘法，转置"></a>1、掌握矩阵核心算法：加法，数乘，矩阵乘法，转置</h3><h3 id="2、理解矩阵乘法的几何意义"><a href="#2、理解矩阵乘法的几何意义" class="headerlink" title="2、理解矩阵乘法的几何意义"></a>2、理解矩阵乘法的几何意义</h3><h3 id="3、-用NumPy实现所有的基础矩阵运算"><a href="#3、-用NumPy实现所有的基础矩阵运算" class="headerlink" title="3、 用NumPy实现所有的基础矩阵运算"></a>3、 用NumPy实现所有的基础矩阵运算</h3><hr>
-<h2 id="二、矩阵的核心算法"><a href="#二、矩阵的核心算法" class="headerlink" title="二、矩阵的核心算法"></a>二、矩阵的核心算法</h2><h3 id="1、矩阵加法"><a href="#1、矩阵加法" class="headerlink" title="1、矩阵加法"></a>1、矩阵加法</h3><h4 id="本质："><a href="#本质：" class="headerlink" title="本质："></a>本质：</h4><blockquote>
+        <h2 id="一、今日学习目标">一、今日学习目标</h2>
+<h3 id="1、掌握矩阵核心算法：加法，数乘，矩阵乘法，转置">1、掌握矩阵核心算法：加法，数乘，矩阵乘法，转置</h3>
+<h3 id="2、理解矩阵乘法的几何意义">2、理解矩阵乘法的几何意义</h3>
+<h3 id="3、-用NumPy实现所有的基础矩阵运算">3、 用NumPy实现所有的基础矩阵运算</h3>
+<hr>
+<h2 id="二、矩阵的核心算法">二、矩阵的核心算法</h2>
+<h3 id="1、矩阵加法">1、矩阵加法</h3>
+<h4 id="本质：">本质：</h4>
+<blockquote>
 <p><strong>矩阵的对应位置相加</strong></p>
 </blockquote>
-<h4 id="条件："><a href="#条件：" class="headerlink" title="条件："></a>条件：</h4><blockquote>
+<h4 id="条件：">条件：</h4>
+<blockquote>
 <p><strong>矩阵的行列数必须完全相同</strong></p>
 </blockquote>
-<h4 id="公式："><a href="#公式：" class="headerlink" title="公式："></a>公式：</h4><p>若：A &#x3D; (a<sub>i,j</sub>)，B&#x3D;(b<sub>i,j</sub>)<br>则：C &#x3D; A + B &#x3D; (a<sub>i,j</sub> + b<sub>i,j</sub>)</p>
-<h4 id="例如："><a href="#例如：" class="headerlink" title="例如："></a>例如：</h4><p>$$<br>A&#x3D;<br>\begin{bmatrix}<br>1 &amp; 2 \\<br>3 &amp; 4<br>\end{bmatrix}<br>,<br>\quad<br>B &#x3D;<br>\begin{bmatrix}<br>5 &amp; 6 \\<br>7 &amp; 8<br>\end{bmatrix}<br>$$</p>
-<h4 id="那么："><a href="#那么：" class="headerlink" title="那么："></a>那么：</h4><p>$$<br>A + B &#x3D;<br>\begin{bmatrix}<br>6 &amp; 8 \\<br>10 &amp; 12<br>\end{bmatrix}<br>$$</p>
+<h4 id="公式：">公式：</h4>
+<p>若：A = (a<sub>i,j</sub>)，B=(b<sub>i,j</sub>)<br>
+则：C = A + B = (a<sub>i,j</sub> + b<sub>i,j</sub>)</p>
+<h4 id="例如：">例如：</h4>
+<p>$$<br>
+A=<br>
+\begin{bmatrix}<br>
+1 &amp; 2 \\<br>
+3 &amp; 4<br>
+\end{bmatrix}<br>
+,<br>
+\quad<br>
+B =<br>
+\begin{bmatrix}<br>
+5 &amp; 6 \\<br>
+7 &amp; 8<br>
+\end{bmatrix}<br>
+$$</p>
+<h4 id="那么：">那么：</h4>
+<p>$$<br>
+A + B =<br>
+\begin{bmatrix}<br>
+6 &amp; 8 \\<br>
+10 &amp; 12<br>
+\end{bmatrix}<br>
+$$</p>
 <hr>
-<h3 id="2、矩阵数乘"><a href="#2、矩阵数乘" class="headerlink" title="2、矩阵数乘"></a>2、矩阵数乘</h3><h4 id="本质：-1"><a href="#本质：-1" class="headerlink" title="本质："></a>本质：</h4><blockquote>
+<h3 id="2、矩阵数乘">2、矩阵数乘</h3>
+<h4 id="本质：-2">本质：</h4>
+<blockquote>
 <p><strong>对矩阵整体进行放缩</strong></p>
 </blockquote>
-<h4 id="规则："><a href="#规则：" class="headerlink" title="规则："></a>规则：</h4><blockquote>
+<h4 id="规则：">规则：</h4>
+<blockquote>
 <p><strong>矩阵内的每个数都与这个数相乘</strong></p>
 </blockquote>
-<h4 id="例如：-1"><a href="#例如：-1" class="headerlink" title="例如："></a>例如：</h4><p>$$<br>2A&#x3D;<br>\begin{bmatrix}<br>2 &amp; 4 \\<br>6 &amp; 8<br>\end{bmatrix}<br>$$</p>
+<h4 id="例如：-2">例如：</h4>
+<p>$$<br>
+2A=<br>
+\begin{bmatrix}<br>
+2 &amp; 4 \\<br>
+6 &amp; 8<br>
+\end{bmatrix}<br>
+$$</p>
 <hr>
-<h3 id="3、矩阵乘法"><a href="#3、矩阵乘法" class="headerlink" title="3、矩阵乘法"></a>3、矩阵乘法</h3><h4 id="本质：-2"><a href="#本质：-2" class="headerlink" title="本质："></a>本质：</h4><blockquote>
+<h3 id="3、矩阵乘法">3、矩阵乘法</h3>
+<h4 id="本质：-3">本质：</h4>
+<blockquote>
 <p><strong>矩阵行与列的点积</strong></p>
 </blockquote>
-<h4 id="条件：-1"><a href="#条件：-1" class="headerlink" title="条件："></a>条件：</h4><blockquote>
-<p><strong>A 是 m×n</strong><br><strong>B 是 n×p</strong><br><strong>中间维度必须相同！！！！</strong></p>
+<h4 id="条件：-2">条件：</h4>
+<blockquote>
+<p><strong>A 是 m×n</strong><br>
+<strong>B 是 n×p</strong><br>
+<strong>中间维度必须相同！！！！</strong></p>
 </blockquote>
-<h4 id="规则：-1"><a href="#规则：-1" class="headerlink" title="规则："></a>规则：</h4><blockquote>
+<h4 id="规则：-2">规则：</h4>
+<blockquote>
 <p><strong>第i行 × 第j列</strong></p>
 </blockquote>
-<h4 id="公式：-1"><a href="#公式：-1" class="headerlink" title="公式："></a>公式：</h4><blockquote>
-<p>$$<br>C_{ij} &#x3D; \sum_{k&#x3D;1}^{n} A_{ik} B_{kj}<br>$$</p>
+<h4 id="公式：-2">公式：</h4>
+<blockquote>
+<p>$$<br>
+C_{ij} = \sum_{k=1}^{n} A_{ik} B_{kj}<br>
+$$</p>
 </blockquote>
-<h4 id="例如：-2"><a href="#例如：-2" class="headerlink" title="例如："></a>例如：</h4><p>$$<br>AB&#x3D;<br>\begin{bmatrix}<br>1 × 5 + 2 × 7 &#x3D; 19 &amp; 1 × 6 + 2 × 8 &#x3D; 22\\<br>3 × 5 + 4 × 7 &#x3D; 43 &amp; 3 × 6 + 4 × 8 &#x3D; 50<br>\end{bmatrix}<br>$$</p>
-<h4 id="重要性质："><a href="#重要性质：" class="headerlink" title="重要性质："></a>重要性质：</h4><ul>
-<li>不满足交换律！！！<br>$$<br>\Large AB ≠ BA<br>$$</li>
+<h4 id="例如：-3">例如：</h4>
+<p>$$<br>
+AB=<br>
+\begin{bmatrix}<br>
+1 × 5 + 2 × 7 = 19 &amp; 1 × 6 + 2 × 8 = 22\\<br>
+3 × 5 + 4 × 7 = 43 &amp; 3 × 6 + 4 × 8 = 50<br>
+\end{bmatrix}<br>
+$$</p>
+<h4 id="重要性质：">重要性质：</h4>
+<ul>
+<li>不满足交换律！！！<br>
+$$<br>
+\Large AB ≠ BA<br>
+$$</li>
 </ul>
 <hr>
-<h3 id="4、转置"><a href="#4、转置" class="headerlink" title="4、转置"></a>4、转置</h3><h4 id="本质：-3"><a href="#本质：-3" class="headerlink" title="本质："></a>本质：</h4><blockquote>
+<h3 id="4、转置">4、转置</h3>
+<h4 id="本质：-4">本质：</h4>
+<blockquote>
 <p>行列互换</p>
 </blockquote>
-<h4 id="定义："><a href="#定义：" class="headerlink" title="定义："></a>定义：</h4><blockquote>
-<p>$$<br>A^T<br>$$</p>
+<h4 id="定义：">定义：</h4>
+<blockquote>
+<p>$$<br>
+A^T<br>
+$$</p>
 </blockquote>
-<h4 id="例如：-3"><a href="#例如：-3" class="headerlink" title="例如："></a>例如：</h4><p>$$<br>A&#x3D;<br>\begin{bmatrix}<br>1 &amp; 2 &amp; 3\\<br>4 &amp; 5 &amp; 6<br>\end{bmatrix}<br>$$</p>
-<p>$$<br>A^T&#x3D;<br>\begin{bmatrix}<br>1 &amp; 4 \\<br>2 &amp; 5 \\<br>3 &amp; 6<br>\end{bmatrix}<br>$$</p>
-<h3 id="补充-单位矩阵"><a href="#补充-单位矩阵" class="headerlink" title="补充:单位矩阵"></a>补充:单位矩阵</h3><h4 id="记作："><a href="#记作：" class="headerlink" title="记作："></a>记作：</h4><p>$$<br>I&#x3D;<br>\begin{bmatrix}<br>1 &amp; 0 \\<br>0 &amp; 1<br>\end{bmatrix}<br>$$</p>
-<h4 id="性质："><a href="#性质：" class="headerlink" title="性质："></a>性质：</h4><p>$$<br>AI &#x3D; IA &#x3D; A<br>$$</p>
+<h4 id="例如：-4">例如：</h4>
+<p>$$<br>
+A=<br>
+\begin{bmatrix}<br>
+1 &amp; 2 &amp; 3\\<br>
+4 &amp; 5 &amp; 6<br>
+\end{bmatrix}<br>
+$$</p>
+<p>$$<br>
+A^T=<br>
+\begin{bmatrix}<br>
+1 &amp; 4 \\<br>
+2 &amp; 5 \\<br>
+3 &amp; 6<br>
+\end{bmatrix}<br>
+$$</p>
+<h3 id="补充-单位矩阵">补充:单位矩阵</h3>
+<h4 id="记作：">记作：</h4>
+<p>$$<br>
+I=<br>
+\begin{bmatrix}<br>
+1 &amp; 0 \\<br>
+0 &amp; 1<br>
+\end{bmatrix}<br>
+$$</p>
+<h4 id="性质：">性质：</h4>
+<p>$$<br>
+AI = IA = A<br>
+$$</p>
 <hr>
-<h2 id="三、矩阵乘法的几何意义"><a href="#三、矩阵乘法的几何意义" class="headerlink" title="三、矩阵乘法的几何意义"></a>三、矩阵乘法的几何意义</h2><h3 id="1、核心结论"><a href="#1、核心结论" class="headerlink" title="1、核心结论"></a>1、核心结论</h3><blockquote>
-<p><strong>矩阵本质上表示一种“线性变换”</strong><br><strong>矩阵乘法 &#x3D; 线性变换的复合（叠加）</strong></p>
+<h2 id="三、矩阵乘法的几何意义">三、矩阵乘法的几何意义</h2>
+<h3 id="1、核心结论">1、核心结论</h3>
+<blockquote>
+<p><strong>矩阵本质上表示一种“线性变换”</strong><br>
+<strong>矩阵乘法 = 线性变换的复合（叠加）</strong></p>
 </blockquote>
 <hr>
-<h3 id="2、矩阵如何作用在向量上"><a href="#2、矩阵如何作用在向量上" class="headerlink" title="2、矩阵如何作用在向量上"></a>2、矩阵如何作用在向量上</h3><p>设一个二维向量：</p>
-<p>$$<br>\begin{bmatrix}<br> x \\<br> y<br> \end{bmatrix}<br>$$</p>
+<h3 id="2、矩阵如何作用在向量上">2、矩阵如何作用在向量上</h3>
+<p>设一个二维向量：</p>
+<p>$$<br>
+\begin{bmatrix}<br>
+x \\<br>
+y<br>
+\end{bmatrix}<br>
+$$</p>
 <p>一个矩阵：</p>
-<p>$$<br>A &#x3D;<br>\begin{bmatrix}<br>a &amp; b \\<br>c &amp; d<br>\end{bmatrix}<br>$$</p>
+<p>$$<br>
+A =<br>
+\begin{bmatrix}<br>
+a &amp; b \\<br>
+c &amp; d<br>
+\end{bmatrix}<br>
+$$</p>
 <p>作用结果为：</p>
-<p>$$<br>A \begin{bmatrix} x \ y \end{bmatrix}<br>$$</p>
+<p>$$<br>
+A \begin{bmatrix} x \ y \end{bmatrix}<br>
+$$</p>
 <hr>
-<h3 id="3、列向量视角"><a href="#3、列向量视角" class="headerlink" title="3、列向量视角"></a>3、列向量视角</h3><p>将矩阵拆成两列：</p>
-<p>$$<br>\vec{v}_1 &#x3D; \begin{bmatrix} a \ c \end{bmatrix}, \quad<br>\vec{v}_2 &#x3D; \begin{bmatrix} b \ d \end{bmatrix}<br>$$</p>
+<h3 id="3、列向量视角">3、列向量视角</h3>
+<p>将矩阵拆成两列：</p>
+<p>$$<br>
+\vec{v}_1 = \begin{bmatrix} a \ c \end{bmatrix}, \quad<br>
+\vec{v}_2 = \begin{bmatrix} b \ d \end{bmatrix}<br>
+$$</p>
 <p>那么有：</p>
-<p>$$<br>A \begin{bmatrix} x \ y \end{bmatrix}<br>&#x3D; x \vec{v}_1 + y \vec{v}_2<br>$$</p>
-<p> 这意味着：</p>
+<p>$$<br>
+A \begin{bmatrix} x \ y \end{bmatrix}<br>
+= x \vec{v}_1 + y \vec{v}_2<br>
+$$</p>
+<p>这意味着：</p>
 <ul>
-<li>原来的坐标 $(x, y)$  </li>
-<li>被映射为：<ul>
-<li>$x$ 倍的第一列向量  </li>
+<li>原来的坐标 $(x, y)$</li>
+<li>被映射为：
+<ul>
+<li>$x$ 倍的第一列向量</li>
 <li>加上 $y$ 倍的第二列向量</li>
 </ul>
 </li>
 </ul>
 <hr>
-<h3 id="4、几何直观理解"><a href="#4、几何直观理解" class="headerlink" title="4、几何直观理解"></a>4、几何直观理解</h3><h4 id="1-矩阵在“改变坐标系”"><a href="#1-矩阵在“改变坐标系”" class="headerlink" title="1. 矩阵在“改变坐标系”"></a>1. 矩阵在“改变坐标系”</h4><p>矩阵的两列：</p>
+<h3 id="4、几何直观理解">4、几何直观理解</h3>
+<h4 id="1-矩阵在“改变坐标系”">1. 矩阵在“改变坐标系”</h4>
+<p>矩阵的两列：</p>
 <ul>
-<li>第一列：原本的 <strong>x轴</strong> 变成哪里  </li>
+<li>第一列：原本的 <strong>x轴</strong> 变成哪里</li>
 <li>第二列：原本的 <strong>y轴</strong> 变成哪里</li>
 </ul>
-<p> 本质：<strong>坐标轴被重新定义了</strong></p>
+<p>本质：<strong>坐标轴被重新定义了</strong></p>
 <hr>
-<h4 id="2-常见几何变换"><a href="#2-常见几何变换" class="headerlink" title="2. 常见几何变换"></a>2. 常见几何变换</h4><h5 id="（1）拉伸-压缩"><a href="#（1）拉伸-压缩" class="headerlink" title="（1）拉伸 &#x2F; 压缩"></a>（1）拉伸 &#x2F; 压缩</h5><p>$$<br>\begin{bmatrix}<br>2 &amp; 0 \\<br>0 &amp; 1<br>\end{bmatrix}<br>$$</p>
-<p> x方向放大 2 倍</p>
+<h4 id="2-常见几何变换">2. 常见几何变换</h4>
+<h5 id="（1）拉伸-压缩">（1）拉伸 / 压缩</h5>
+<p>$$<br>
+\begin{bmatrix}<br>
+2 &amp; 0 \\<br>
+0 &amp; 1<br>
+\end{bmatrix}<br>
+$$</p>
+<p>x方向放大 2 倍</p>
 <hr>
-<h5 id="（2）旋转"><a href="#（2）旋转" class="headerlink" title="（2）旋转"></a>（2）旋转</h5><p>$$<br>\begin{bmatrix}<br>\cos\theta &amp; -\sin\theta \\<br>\sin\theta &amp; \cos\theta<br>\end{bmatrix}<br>$$</p>
-<p> 整个空间旋转 $\theta$</p>
+<h5 id="（2）旋转">（2）旋转</h5>
+<p>$$<br>
+\begin{bmatrix}<br>
+\cos\theta &amp; -\sin\theta \\<br>
+\sin\theta &amp; \cos\theta<br>
+\end{bmatrix}<br>
+$$</p>
+<p>整个空间旋转 $\theta$</p>
 <hr>
-<h4 id="（3）剪切（Shear）"><a href="#（3）剪切（Shear）" class="headerlink" title="（3）剪切（Shear）"></a>（3）剪切（Shear）</h4><p>$$<br>\begin{bmatrix}<br>1 &amp; 1 \\<br>0 &amp; 1<br>\end{bmatrix}<br>$$</p>
-<p> 图形被“斜着拉”</p>
+<h4 id="（3）剪切（Shear）">（3）剪切（Shear）</h4>
+<p>$$<br>
+\begin{bmatrix}<br>
+1 &amp; 1 \\<br>
+0 &amp; 1<br>
+\end{bmatrix}<br>
+$$</p>
+<p>图形被“斜着拉”</p>
 <hr>
-<h3 id="5、矩阵乘法的几何意义（重点）"><a href="#5、矩阵乘法的几何意义（重点）" class="headerlink" title="5、矩阵乘法的几何意义（重点）"></a>5、矩阵乘法的几何意义（重点）</h3><p>设两个矩阵：</p>
-<p>$$<br>AB<br>$$</p>
+<h3 id="5、矩阵乘法的几何意义（重点）">5、矩阵乘法的几何意义（重点）</h3>
+<p>设两个矩阵：</p>
+<p>$$<br>
+AB<br>
+$$</p>
 <p>它作用在向量上：</p>
-<p>$$<br>AB\vec{x} &#x3D; A(B\vec{x})<br>$$</p>
-<p> 含义：</p>
+<p>$$<br>
+AB\vec{x} = A(B\vec{x})<br>
+$$</p>
+<p>含义：</p>
 <ol>
 <li>先进行 <strong>B 变换</strong></li>
 <li>再进行 <strong>A 变换</strong></li>
 </ol>
 <hr>
-<h3 id="6、直观理解：变换的叠加"><a href="#6、直观理解：变换的叠加" class="headerlink" title="6、直观理解：变换的叠加"></a>6、直观理解：变换的叠加</h3><p>想象一个单位正方形：</p>
+<h3 id="6、直观理解：变换的叠加">6、直观理解：变换的叠加</h3>
+<p>想象一个单位正方形：</p>
 <ol>
-<li>先用矩阵 $B$ 进行变形  </li>
+<li>先用矩阵 $B$ 进行变形</li>
 <li>再用矩阵 $A$ 再变形一次</li>
 </ol>
-<p> 最终效果就是矩阵乘积 $AB$</p>
+<p>最终效果就是矩阵乘积 $AB$</p>
 <hr>
-<h3 id="7、为什么矩阵乘法不满足交换律？"><a href="#7、为什么矩阵乘法不满足交换律？" class="headerlink" title="7、为什么矩阵乘法不满足交换律？"></a>7、为什么矩阵乘法不满足交换律？</h3><p>$$<br>AB \ne BA<br>$$</p>
+<h3 id="7、为什么矩阵乘法不满足交换律？">7、为什么矩阵乘法不满足交换律？</h3>
+<p>$$<br>
+AB \ne BA<br>
+$$</p>
 <p>原因：</p>
 <ul>
-<li>先旋转再拉伸 ≠ 先拉伸再旋转  </li>
+<li>先旋转再拉伸 ≠ 先拉伸再旋转</li>
 <li>变换顺序不同，结果不同</li>
 </ul>
-<p> 本质：<strong>变换是有顺序的</strong></p>
+<p>本质：<strong>变换是有顺序的</strong></p>
 <hr>
-<h3 id="8、更高阶理解：基底变换"><a href="#8、更高阶理解：基底变换" class="headerlink" title="8、更高阶理解：基底变换"></a>8、更高阶理解：基底变换</h3><p>矩阵乘法还可以理解为：</p>
+<h3 id="8、更高阶理解：基底变换">8、更高阶理解：基底变换</h3>
+<p>矩阵乘法还可以理解为：</p>
 <ul>
-<li>第一个矩阵：改变坐标系  </li>
+<li>第一个矩阵：改变坐标系</li>
 <li>第二个矩阵：在新坐标系下继续变换</li>
 </ul>
-<p> 本质是：<strong>基底（basis）的连续变化</strong></p>
+<p>本质是：<strong>基底（basis）的连续变化</strong></p>
 <hr>
-<h3 id="9、在计算机-深度学习中的意义"><a href="#9、在计算机-深度学习中的意义" class="headerlink" title="9、在计算机 &#x2F; 深度学习中的意义"></a>9、在计算机 &#x2F; 深度学习中的意义</h3><p>在线性模型中：</p>
-<p>$$<br>y &#x3D; Wx<br>$$</p>
+<h3 id="9、在计算机-深度学习中的意义">9、在计算机 / 深度学习中的意义</h3>
+<p>在线性模型中：</p>
+<p>$$<br>
+y = Wx<br>
+$$</p>
 <p>矩阵 $W$ 的作用：</p>
 <ul>
-<li>特征组合  </li>
-<li>信息压缩 &#x2F; 扩展  </li>
+<li>特征组合</li>
+<li>信息压缩 / 扩展</li>
 <li>空间投影</li>
 </ul>
 <p>本质仍然是：<strong>线性变换</strong></p>
 <hr>
-<h3 id="10、一句话总结"><a href="#10、一句话总结" class="headerlink" title="10、一句话总结"></a>10、一句话总结</h3><blockquote>
-<p><strong>矩阵乘法 &#x3D; 线性变换的复合</strong></p>
+<h3 id="10、一句话总结">10、一句话总结</h3>
+<blockquote>
+<p><strong>矩阵乘法 = 线性变换的复合</strong></p>
 </blockquote>
 <hr>
-<h2 id="四、用NumPy实现所有的基础矩阵运算"><a href="#四、用NumPy实现所有的基础矩阵运算" class="headerlink" title="四、用NumPy实现所有的基础矩阵运算"></a>四、用NumPy实现所有的基础矩阵运算</h2><p>NumPy 是 Python 中进行数值计算的核心库，矩阵运算非常高效且简洁。</p>
+<h2 id="四、用NumPy实现所有的基础矩阵运算">四、用NumPy实现所有的基础矩阵运算</h2>
+<p>NumPy 是 Python 中进行数值计算的核心库，矩阵运算非常高效且简洁。</p>
 <hr>
-<h3 id="1、安装与导入"><a href="#1、安装与导入" class="headerlink" title="1、安装与导入"></a>1、安装与导入</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install numpy</span><br></pre></td></tr></table></figure>
+<h3 id="1、安装与导入">1、安装与导入</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install numpy</span><br></pre></td></tr></table></figure>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br></pre></td></tr></table></figure>
 <hr>
-<h3 id="2、创建矩阵"><a href="#2、创建矩阵" class="headerlink" title="2、创建矩阵"></a>2、创建矩阵</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">A = np.array([[<span class="number">1</span>, <span class="number">2</span>],</span><br><span class="line">              [<span class="number">3</span>, <span class="number">4</span>]])</span><br><span class="line"></span><br><span class="line">B = np.array([[<span class="number">5</span>, <span class="number">6</span>],</span><br><span class="line">              [<span class="number">7</span>, <span class="number">8</span>]])</span><br></pre></td></tr></table></figure>
+<h3 id="2、创建矩阵">2、创建矩阵</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">A = np.array([[<span class="number">1</span>, <span class="number">2</span>],</span><br><span class="line">              [<span class="number">3</span>, <span class="number">4</span>]])</span><br><span class="line"></span><br><span class="line">B = np.array([[<span class="number">5</span>, <span class="number">6</span>],</span><br><span class="line">              [<span class="number">7</span>, <span class="number">8</span>]])</span><br></pre></td></tr></table></figure>
 <hr>
-<h3 id="3、矩阵加法"><a href="#3、矩阵加法" class="headerlink" title="3、矩阵加法"></a>3、矩阵加法</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">C = A + B</span><br><span class="line"><span class="built_in">print</span>(C)</span><br></pre></td></tr></table></figure>
+<h3 id="3、矩阵加法">3、矩阵加法</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">C = A + B</span><br><span class="line"><span class="built_in">print</span>(C)</span><br></pre></td></tr></table></figure>
 <p>输出</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[[ 6  8]</span><br><span class="line"> [10 12]]</span><br></pre></td></tr></table></figure>
 <hr>
-<h3 id="4、数乘"><a href="#4、数乘" class="headerlink" title="4、数乘"></a>4、数乘</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">C = <span class="number">2</span> * A</span><br><span class="line"><span class="built_in">print</span>(C)</span><br></pre></td></tr></table></figure>
+<h3 id="4、数乘">4、数乘</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">C = <span class="number">2</span> * A</span><br><span class="line"><span class="built_in">print</span>(C)</span><br></pre></td></tr></table></figure>
 <p>输出</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[[2 4]</span><br><span class="line"> [6 8]]</span><br></pre></td></tr></table></figure>
 <hr>
-<h3 id="5、矩阵乘法"><a href="#5、矩阵乘法" class="headerlink" title="5、矩阵乘法"></a>5、矩阵乘法</h3><h4 id="方法1：使用"><a href="#方法1：使用" class="headerlink" title="方法1：使用 @"></a>方法1：使用 @</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">C = A @ B</span><br><span class="line"><span class="built_in">print</span>(C)</span><br></pre></td></tr></table></figure>
-<h4 id="方法2：使用-np-dot"><a href="#方法2：使用-np-dot" class="headerlink" title="方法2：使用 np.dot"></a>方法2：使用 np.dot</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">C = np.dot(A, B)</span><br><span class="line"><span class="built_in">print</span>(C)</span><br></pre></td></tr></table></figure>
+<h3 id="5、矩阵乘法">5、矩阵乘法</h3>
+<h4 id="方法1：使用">方法1：使用 @</h4>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">C = A @ B</span><br><span class="line"><span class="built_in">print</span>(C)</span><br></pre></td></tr></table></figure>
+<h4 id="方法2：使用-np-dot">方法2：使用 np.dot</h4>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">C = np.dot(A, B)</span><br><span class="line"><span class="built_in">print</span>(C)</span><br></pre></td></tr></table></figure>
 <p>输出：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[[19 22]</span><br><span class="line"> [43 50]]</span><br></pre></td></tr></table></figure>
 <hr>
-<h3 id="6、转置矩阵"><a href="#6、转置矩阵" class="headerlink" title="6、转置矩阵"></a>6、转置矩阵</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">A_T = A.T</span><br><span class="line"><span class="built_in">print</span>(A_T)</span><br></pre></td></tr></table></figure>
+<h3 id="6、转置矩阵">6、转置矩阵</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">A_T = A.T</span><br><span class="line"><span class="built_in">print</span>(A_T)</span><br></pre></td></tr></table></figure>
 <p>输出：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[[1 3]</span><br><span class="line"> [2 4]]</span><br></pre></td></tr></table></figure>
 <hr>
-<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>关于矩阵的运算是机器学习的前置知识中非常重要的一个点，在理解矩阵是如何运算的同时，我们要明白其在处理数据当中的应用，我将其归纳如下：</p>
+<h1>总结</h1>
+<p>关于矩阵的运算是机器学习的前置知识中非常重要的一个点，在理解矩阵是如何运算的同时，我们要明白其在处理数据当中的应用，我将其归纳如下：</p>
 <ul>
-<li>加法 &#x3D; 数据叠加</li>
-<li>数乘 &#x3D; 权重缩放</li>
-<li>乘法 &#x3D; 信息融合 &#x2F; 线性变换</li>
-<li>转置 &#x3D; 改变数据视角<br>在理解了这些后，我们才能够更深一步的了解神经网络相关的内容</li>
+<li>加法 = 数据叠加</li>
+<li>数乘 = 权重缩放</li>
+<li>乘法 = 信息融合 / 线性变换</li>
+<li>转置 = 改变数据视角<br>
+在理解了这些后，我们才能够更深一步的了解神经网络相关的内容</li>
 </ul>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2026/03/25/DAY2-%E7%9F%A9%E9%98%B5%E5%9F%BA%E7%A1%80%E4%B8%8E%E5%87%A0%E4%BD%95%E6%84%8F%E4%B9%89/" data-id="cuid_RSoK-ayCrgnzrSbL_2vq" data-title="机器学习基础（二）：向量空间与线性代数入门" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/03/25/DAY2-%E7%9F%A9%E9%98%B5%E5%9F%BA%E7%A1%80%E4%B8%8E%E5%87%A0%E4%BD%95%E6%84%8F%E4%B9%89/" data-id="cuidEMeluFdzm_3YZOnjnAZdt" data-title="机器学习基础（二）：向量空间与线性代数入门" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -289,7 +461,7 @@
 <nav id="article-nav">
   
     <a href="/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9A%E4%BB%8E%E6%AC%A7%E5%BC%8F%E8%B7%9D%E7%A6%BB%E5%88%B0%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" id="article-nav-newer" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Newer</strong>
+      <strong class="article-nav-caption">前一篇</strong>
       <div class="article-nav-title">
         
           机器学习基础（三）：从欧式距离到梯度下降
@@ -299,7 +471,7 @@
   
   
     <a href="/2026/03/24/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8/" id="article-nav-older" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Older</strong>
+      <strong class="article-nav-caption">后一篇</strong>
       <div class="article-nav-title">机器学习基础（一）：从向量到矩阵变换</div>
     </a>
   
@@ -315,7 +487,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Categories</h3>
+    <h3 class="widget-title">分类</h3>
     <div class="widget">
       <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a></li></ul>
     </div>
@@ -325,7 +497,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Tags</h3>
+    <h3 class="widget-title">标签</h3>
     <div class="widget">
       <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/NumPy/" rel="tag">NumPy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" rel="tag">学习记录</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" rel="tag">数学基础</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" rel="tag">线性代数</a></li></ul>
     </div>
@@ -335,7 +507,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Tag Cloud</h3>
+    <h3 class="widget-title">标签云</h3>
     <div class="widget tagcloud">
       <a href="/tags/NumPy/" style="font-size: 20px;">NumPy</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" style="font-size: 20px;">学习记录</a> <a href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" style="font-size: 10px;">数学基础</a> <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" style="font-size: 20px;">机器学习</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" style="font-size: 20px;">线性代数</a>
     </div>
@@ -344,9 +516,9 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Archives</h3>
+    <h3 class="widget-title">归档</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2026/03/">March 2026</a></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2026/03/">三月 2026</a></li></ul>
     </div>
   </div>
 
@@ -354,7 +526,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Recent Posts</h3>
+    <h3 class="widget-title">最新文章</h3>
     <div class="widget">
       <ul>
         
@@ -383,7 +555,7 @@
   <div class="outer">
     <div id="footer-info" class="inner">
       
-      &copy; 2026 John Doe<br>
+      &copy; 2026 忤逆<br>
       Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
     </div>
   </div>
