@@ -76,6 +76,169 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-机器学习基础（三）：从欧式距离到梯度下降" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9A%E4%BB%8E%E6%AC%A7%E5%BC%8F%E8%B7%9D%E7%A6%BB%E5%88%B0%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" class="article-date">
+  <time class="dt-published" datetime="2026-03-26T16:00:00.000Z" itemprop="datePublished">2026-03-27</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9A%E4%BB%8E%E6%AC%A7%E5%BC%8F%E8%B7%9D%E7%A6%BB%E5%88%B0%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/">机器学习基础（三）：从欧式距离到梯度下降</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>Day 3 学习记录</p>
+<p>一、今日学习目标</p>
+<p>由于今日状态不佳，重点攻克两个核心概念：</p>
+<ul>
+<li>向量的距离（欧式距离）</li>
+<li>梯度与梯度下降</li>
+</ul>
+<hr>
+<p>二、向量的距离（欧式距离）</p>
+<p>本质</p>
+<p>两个向量之间的直线距离</p>
+<hr>
+<p>基本公式</p>
+<p>设两个向量 $\boldsymbol{a}, \boldsymbol{b}$：</p>
+<p>$$<br>d(\boldsymbol{a}, \boldsymbol{b}) &#x3D; \sqrt{\sum_{i&#x3D;1}^{n}(a_i - b_i)^2}<br>$$</p>
+<hr>
+<p>等价形式</p>
+<ol>
+<li>列向量形式（线性代数常用）</li>
+</ol>
+<p>$$<br>d(\boldsymbol{a}, \boldsymbol{b}) &#x3D; \sqrt{(\boldsymbol{a} - \boldsymbol{b})^T (\boldsymbol{a} - \boldsymbol{b})}<br>$$</p>
+<ol start="2">
+<li>行向量形式（代码中常见）</li>
+</ol>
+<p>$$<br>d(\boldsymbol{a}, \boldsymbol{b}) &#x3D; \sqrt{(\boldsymbol{a} - \boldsymbol{b})(\boldsymbol{a} - \boldsymbol{b})^T}<br>$$</p>
+<ol start="3">
+<li>范数形式（论文常用）</li>
+</ol>
+<p>$$<br>d(\boldsymbol{a}, \boldsymbol{b}) &#x3D; | \boldsymbol{a} - \boldsymbol{b} |_2<br>$$</p>
+<p>本质：欧式距离等于向量差的 L2 范数</p>
+<hr>
+<p>与损失函数的关系（MSE）</p>
+<p>$$<br>MSE &#x3D; \frac{1}{2m} \sum_{i&#x3D;1}^m (y_{pred}^{(i)} - y_{true}^{(i)})^2<br>&#x3D; \frac{1}{2m} | \boldsymbol{y_{pred}} - \boldsymbol{y_{true}} |_2^2<br>$$</p>
+<hr>
+<p>三、梯度与梯度下降</p>
+<hr>
+<ol>
+<li>梯度（Gradient）</li>
+</ol>
+<p>定义</p>
+<p>对于函数：</p>
+<p>$$<br>f(\boldsymbol{x}) &#x3D; f(x_1, x_2, …, x_n)<br>$$</p>
+<p>其中：</p>
+<p>$$<br>\boldsymbol{x} &#x3D;<br>\begin{pmatrix}<br>x_1 \<br>x_2 \<br>\vdots \<br>x_n<br>\end{pmatrix}<br>$$</p>
+<p>梯度定义为：</p>
+<p>$$<br>\nabla f(\boldsymbol{x}) &#x3D;<br>\begin{pmatrix}<br>\frac{\partial f}{\partial x_1} \<br>\frac{\partial f}{\partial x_2} \<br>\vdots \<br>\frac{\partial f}{\partial x_n}<br>\end{pmatrix}<br>$$</p>
+<hr>
+<p>意义</p>
+<ul>
+<li>几何意义：函数增长最快的方向</li>
+<li>物理意义：最大变化率方向</li>
+<li>机器学习意义：参数对损失的影响程度</li>
+</ul>
+<hr>
+<p>作用</p>
+<ol>
+<li>指明优化方向（下降最快方向）</li>
+<li>衡量参数重要性</li>
+<li>连接模型与优化</li>
+<li>解决高维优化问题</li>
+</ol>
+<hr>
+<p>应用</p>
+<ul>
+<li>线性回归、逻辑回归</li>
+<li>神经网络反向传播</li>
+<li>优化器（SGD、Adam、RMSprop）</li>
+</ul>
+<hr>
+<ol start="2">
+<li>梯度下降（Gradient Descent）</li>
+</ol>
+<hr>
+<p>定义</p>
+<p>梯度下降是一种基于一阶导数的迭代优化算法，其核心逻辑是：沿目标函数在当前点的梯度反方向，以一定步长更新参数，使函数值逐步减小。</p>
+<hr>
+<p>迭代公式</p>
+<p>单变量：</p>
+<p>$$<br>x_{t+1} &#x3D; x_t - \eta f’(x_t)<br>$$</p>
+<p>多变量：</p>
+<p>$$<br>\boldsymbol{x}_{t+1} &#x3D; \boldsymbol{x}_t - \eta \nabla f(\boldsymbol{x}_t)<br>$$</p>
+<hr>
+<p>机器学习中的形式（线性回归）</p>
+<p>$$<br>\boldsymbol{W}_{t+1} &#x3D; \boldsymbol{W}_t - \eta \cdot \frac{1}{m} \boldsymbol{X}^T (\boldsymbol{X}\boldsymbol{W}_t + b_t - \boldsymbol{y})<br>$$</p>
+<p>$$<br>b_{t+1} &#x3D; b_t - \eta \cdot \frac{1}{m} \sum_{i&#x3D;1}^m (\boldsymbol{x}^{(i)}\boldsymbol{W}_t + b_t - y^{(i)})<br>$$</p>
+<hr>
+<p>收敛条件</p>
+<p>满足以下任一条件时停止迭代：</p>
+<ul>
+<li><p>梯度的模长趋近于 0：<br>$$<br>|\nabla f(\boldsymbol{x}_t)| &lt; \epsilon<br>$$</p>
+</li>
+<li><p>目标函数变化量很小：<br>$$<br>|f(\boldsymbol{x}_{t+1}) - f(\boldsymbol{x}_t)| &lt; \epsilon<br>$$</p>
+</li>
+<li><p>达到预设最大迭代次数</p>
+</li>
+</ul>
+<hr>
+<p>核心理解</p>
+<ul>
+<li>本质：一种逐步逼近最优解的搜索策略</li>
+<li>学习率：控制收敛速度与稳定性</li>
+<li>过程：不断从高损失区域向低损失区域移动</li>
+</ul>
+<hr>
+<p>作用</p>
+<ol>
+<li>机器学习模型训练的核心方法</li>
+<li>构建完整训练流程</li>
+<li>支撑深度学习模型</li>
+<li>降低优化问题复杂度</li>
+</ol>
+<hr>
+<p>总结</p>
+<p>今天主要学习了两个核心内容：</p>
+<ul>
+<li>欧式距离：用于衡量数据之间的差异</li>
+<li>梯度下降：用于优化模型参数</li>
+</ul>
+<p>这两部分共同构成了机器学习中的基础数学框架。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9A%E4%BB%8E%E6%AC%A7%E5%BC%8F%E8%B7%9D%E7%A6%BB%E5%88%B0%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" data-id="cuid4kgVCvm5QWkeDr8mWCo0p" data-title="机器学习基础（三）：从欧式距离到梯度下降" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" rel="tag">数学基础</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-DAY2-矩阵基础与几何意义" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
     <a href="/2026/03/25/DAY2-%E7%9F%A9%E9%98%B5%E5%9F%BA%E7%A1%80%E4%B8%8E%E5%87%A0%E4%BD%95%E6%84%8F%E4%B9%89/" class="article-date">
@@ -94,7 +257,7 @@
         
   
     <h1 itemprop="name">
-      <a class="p-name article-title" href="/2026/03/25/DAY2-%E7%9F%A9%E9%98%B5%E5%9F%BA%E7%A1%80%E4%B8%8E%E5%87%A0%E4%BD%95%E6%84%8F%E4%B9%89/">DAY2 矩阵基础与几何意义</a>
+      <a class="p-name article-title" href="/2026/03/25/DAY2-%E7%9F%A9%E9%98%B5%E5%9F%BA%E7%A1%80%E4%B8%8E%E5%87%A0%E4%BD%95%E6%84%8F%E4%B9%89/">机器学习基础（二）：向量空间与线性代数入门</a>
     </h1>
   
 
@@ -271,7 +434,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2026/03/25/DAY2-%E7%9F%A9%E9%98%B5%E5%9F%BA%E7%A1%80%E4%B8%8E%E5%87%A0%E4%BD%95%E6%84%8F%E4%B9%89/" data-id="cuid_RSoK-ayCrgnzrSbL_2vq" data-title="DAY2 矩阵基础与几何意义" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="http://example.com/2026/03/25/DAY2-%E7%9F%A9%E9%98%B5%E5%9F%BA%E7%A1%80%E4%B8%8E%E5%87%A0%E4%BD%95%E6%84%8F%E4%B9%89/" data-id="cuid_RSoK-ayCrgnzrSbL_2vq" data-title="机器学习基础（二）：向量空间与线性代数入门" class="article-share-link"><span class="fa fa-share">Share</span></a>
       
       
       
@@ -303,7 +466,7 @@
         
   
     <h1 itemprop="name">
-      <a class="p-name article-title" href="/2026/03/24/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8/">机器学习入门</a>
+      <a class="p-name article-title" href="/2026/03/24/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8/">机器学习基础（一）：从向量到矩阵变换</a>
     </h1>
   
 
@@ -377,11 +540,11 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2026/03/24/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8/" data-id="cuidzHU7MtzJ-SYyUGRckvwyT" data-title="机器学习入门" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="http://example.com/2026/03/24/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8/" data-id="cuidzHU7MtzJ-SYyUGRckvwyT" data-title="机器学习基础（一）：从向量到矩阵变换" class="article-share-link"><span class="fa fa-share">Share</span></a>
       
       
       
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/NumPy/" rel="tag">NumPy</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" rel="tag">学习记录</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" rel="tag">线性代数</a></li></ul>
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/NumPy/" rel="tag">NumPy</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" rel="tag">学习记录</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" rel="tag">线性代数</a></li></ul>
 
     </footer>
   </div>
@@ -411,7 +574,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/NumPy/" rel="tag">NumPy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" rel="tag">学习记录</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" rel="tag">线性代数</a></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/NumPy/" rel="tag">NumPy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" rel="tag">学习记录</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" rel="tag">数学基础</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" rel="tag">线性代数</a></li></ul>
     </div>
   </div>
 
@@ -421,7 +584,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget tagcloud">
-      <a href="/tags/NumPy/" style="font-size: 10px;">NumPy</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" style="font-size: 10px;">学习记录</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" style="font-size: 10px;">线性代数</a>
+      <a href="/tags/NumPy/" style="font-size: 20px;">NumPy</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" style="font-size: 20px;">学习记录</a> <a href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" style="font-size: 10px;">数学基础</a> <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" style="font-size: 20px;">机器学习</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" style="font-size: 20px;">线性代数</a>
     </div>
   </div>
 
@@ -443,11 +606,15 @@
       <ul>
         
           <li>
-            <a href="/2026/03/25/DAY2-%E7%9F%A9%E9%98%B5%E5%9F%BA%E7%A1%80%E4%B8%8E%E5%87%A0%E4%BD%95%E6%84%8F%E4%B9%89/">DAY2 矩阵基础与几何意义</a>
+            <a href="/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9A%E4%BB%8E%E6%AC%A7%E5%BC%8F%E8%B7%9D%E7%A6%BB%E5%88%B0%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/">机器学习基础（三）：从欧式距离到梯度下降</a>
           </li>
         
           <li>
-            <a href="/2026/03/24/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8/">机器学习入门</a>
+            <a href="/2026/03/25/DAY2-%E7%9F%A9%E9%98%B5%E5%9F%BA%E7%A1%80%E4%B8%8E%E5%87%A0%E4%BD%95%E6%84%8F%E4%B9%89/">机器学习基础（二）：向量空间与线性代数入门</a>
+          </li>
+        
+          <li>
+            <a href="/2026/03/24/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8/">机器学习基础（一）：从向量到矩阵变换</a>
           </li>
         
       </ul>
