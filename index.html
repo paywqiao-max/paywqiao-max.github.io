@@ -88,6 +88,143 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-机器学习基础（四）：损失函数与优化目标" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9A%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0%E4%B8%8E%E4%BC%98%E5%8C%96%E7%9B%AE%E6%A0%87/" class="article-date">
+  <time class="dt-published" datetime="2026-03-27T15:27:10.000Z" itemprop="datePublished">2026-03-27</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9A%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0%E4%B8%8E%E4%BC%98%E5%8C%96%E7%9B%AE%E6%A0%87/">机器学习基础（四）：损失函数与优化目标</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h1>机器学习基础（四）：损失函数与优化目标</h1>
+<h2 id="一、引入">一、引入</h2>
+<p>在上一节中，我们已经学习了如何利用梯度下降来不断优化参数。</p>
+<p>但一个更本质的问题是：</p>
+<p><strong>模型如何判断当前的预测是“好”还是“坏”？</strong></p>
+<p>要回答这个问题，我们需要引入一个核心概念——损失函数。</p>
+<hr>
+<h2 id="二、从误差到损失函数">二、从误差到损失函数</h2>
+<p>在正式讨论损失函数之前，我们先来看“误差（Error）”：</p>
+<p>$$<br>
+\text{误差} = \text{预测值} - \text{真实值}<br>
+$$</p>
+<p>误差可以衡量单个样本的预测偏差，但当样本数量增多时，会出现一个问题：</p>
+<blockquote>
+<p>正负误差可能相互抵消</p>
+</blockquote>
+<p>例如：一个预测误差为 +1，另一个为 -1，总误差可能为 0，但显然模型并不完美。</p>
+<p>因此，我们需要一种<strong>不会相互抵消的整体度量方式</strong>，这就是损失函数。</p>
+<hr>
+<h2 id="三、什么是损失函数">三、什么是损失函数</h2>
+<p>损失函数（Loss Function）用于衡量模型预测值与真实值之间的整体差距。</p>
+<p>一般来说：</p>
+<blockquote>
+<p>损失函数的值越小，模型预测效果越好</p>
+</blockquote>
+<p>不同任务会选择不同的损失函数。</p>
+<hr>
+<h2 id="四、常见损失函数">四、常见损失函数</h2>
+<h3 id="1-均方误差（MSE）">1. 均方误差（MSE）</h3>
+<p>$$<br>
+L = \frac{1}{n} \sum (y_i - \hat{y}_i)^2<br>
+$$</p>
+<p>特点：</p>
+<ul>
+<li>对较大误差惩罚更强</li>
+<li>函数平滑，易于求导（适合梯度下降）</li>
+<li>常用于回归问题</li>
+</ul>
+<hr>
+<h3 id="2-平均绝对误差（MAE）">2. 平均绝对误差（MAE）</h3>
+<p>$$<br>
+L = \frac{1}{n} \sum |y_i - \hat{y}_i|<br>
+$$</p>
+<p>特点：</p>
+<ul>
+<li>对异常值更鲁棒</li>
+<li>对误差的惩罚是线性的</li>
+<li>但在 0 附近不可导（优化略复杂）</li>
+</ul>
+<hr>
+<h3 id="3-交叉熵损失（Cross-Entropy）">3. 交叉熵损失（Cross Entropy）</h3>
+<p>$$<br>
+L = -\sum y \log \hat{y}<br>
+$$</p>
+<p>特点：</p>
+<ul>
+<li>常用于分类问题</li>
+<li>能有效衡量概率分布之间的差异</li>
+<li>在深度学习中非常常见</li>
+</ul>
+<hr>
+<h2 id="五、从损失函数到优化目标">五、从损失函数到优化目标</h2>
+<p>损失函数给出了一个“评价标准”，而机器学习的目标就是：</p>
+<p>$$<br>
+\min_{\theta} L(\theta)<br>
+$$</p>
+<p>也就是说，我们希望找到一组参数，使损失函数的值尽可能小。</p>
+<hr>
+<h2 id="六、损失函数与梯度下降">六、损失函数与梯度下降</h2>
+<p>可以从几何角度来理解二者的关系：</p>
+<ul>
+<li>损失函数：定义了一片“地形”（高维曲面）</li>
+<li>参数：对应地形中的一个位置</li>
+<li>梯度下降：沿着坡度下降，寻找最低点</li>
+</ul>
+<p>因此：</p>
+<blockquote>
+<p>损失函数决定“往哪里去”<br>
+梯度下降决定“怎么去”</p>
+</blockquote>
+<hr>
+<h2 id="七、总结">七、总结</h2>
+<ul>
+<li>误差描述单个样本的偏差</li>
+<li>损失函数衡量整体预测效果</li>
+<li>优化目标是最小化损失函数</li>
+<li>梯度下降用于实现这一优化过程</li>
+</ul>
+<blockquote>
+<p>损失函数回答“什么是好”<br>
+梯度下降回答“如何变好”</p>
+</blockquote>
+<p>二者共同构成了机器学习中最核心的优化机制。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://paywqiao-max.github.io/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9A%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0%E4%B8%8E%E4%BC%98%E5%8C%96%E7%9B%AE%E6%A0%87/" data-id="cuidkblVie0QFgu51QHU6Kzqv" data-title="机器学习基础（四）：损失函数与优化目标" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" rel="tag">优化方法</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" rel="tag">学习记录</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" rel="tag">数学基础</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" rel="tag">线性代数</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-机器学习基础（三）：从欧式距离到梯度下降" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
     <a href="/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9A%E4%BB%8E%E6%AC%A7%E5%BC%8F%E8%B7%9D%E7%A6%BB%E5%88%B0%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" class="article-date">
@@ -284,7 +421,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9A%E4%BB%8E%E6%AC%A7%E5%BC%8F%E8%B7%9D%E7%A6%BB%E5%88%B0%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" data-id="cuidmSOd5hgFCjUCeXymRTFSd" data-title="机器学习基础（三）：从欧式距离到梯度下降" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9A%E4%BB%8E%E6%AC%A7%E5%BC%8F%E8%B7%9D%E7%A6%BB%E5%88%B0%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" data-id="cuidcJky3MHurrMJTfqEYQ2fx" data-title="机器学习基础（三）：从欧式距离到梯度下降" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -655,7 +792,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/03/25/DAY2-%E7%9F%A9%E9%98%B5%E5%9F%BA%E7%A1%80%E4%B8%8E%E5%87%A0%E4%BD%95%E6%84%8F%E4%B9%89/" data-id="cuidEMeluFdzm_3YZOnjnAZdt" data-title="机器学习基础（二）：向量空间与线性代数入门" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/03/25/DAY2-%E7%9F%A9%E9%98%B5%E5%9F%BA%E7%A1%80%E4%B8%8E%E5%87%A0%E4%BD%95%E6%84%8F%E4%B9%89/" data-id="cuidporZpAO89G1lcKBA7jsAQ" data-title="机器学习基础（二）：向量空间与线性代数入门" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -768,7 +905,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/03/24/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8/" data-id="cuid0HQeCpjPL_uTOKSmLj3qt" data-title="机器学习基础（一）：从向量到矩阵变换" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/03/24/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8/" data-id="cuidktdFsGIZ8685xjbSWc1cr" data-title="机器学习基础（一）：从向量到矩阵变换" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -802,7 +939,7 @@ $$</p>
   <div class="widget-wrap">
     <h3 class="widget-title">标签</h3>
     <div class="widget">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/NumPy/" rel="tag">NumPy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" rel="tag">学习记录</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" rel="tag">数学基础</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" rel="tag">线性代数</a></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/NumPy/" rel="tag">NumPy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" rel="tag">优化方法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" rel="tag">学习记录</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" rel="tag">数学基础</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" rel="tag">线性代数</a></li></ul>
     </div>
   </div>
 
@@ -812,7 +949,7 @@ $$</p>
   <div class="widget-wrap">
     <h3 class="widget-title">标签云</h3>
     <div class="widget tagcloud">
-      <a href="/tags/NumPy/" style="font-size: 20px;">NumPy</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" style="font-size: 20px;">学习记录</a> <a href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" style="font-size: 10px;">数学基础</a> <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" style="font-size: 20px;">机器学习</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" style="font-size: 20px;">线性代数</a>
+      <a href="/tags/NumPy/" style="font-size: 15px;">NumPy</a> <a href="/tags/%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" style="font-size: 10px;">优化方法</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" style="font-size: 20px;">学习记录</a> <a href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" style="font-size: 15px;">数学基础</a> <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" style="font-size: 20px;">机器学习</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" style="font-size: 20px;">线性代数</a>
     </div>
   </div>
 
@@ -832,6 +969,10 @@ $$</p>
     <h3 class="widget-title">最新文章</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9A%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0%E4%B8%8E%E4%BC%98%E5%8C%96%E7%9B%AE%E6%A0%87/">机器学习基础（四）：损失函数与优化目标</a>
+          </li>
         
           <li>
             <a href="/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9A%E4%BB%8E%E6%AC%A7%E5%BC%8F%E8%B7%9D%E7%A6%BB%E5%88%B0%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/">机器学习基础（三）：从欧式距离到梯度下降</a>
