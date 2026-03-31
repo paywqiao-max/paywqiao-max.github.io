@@ -88,6 +88,259 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-机器学习基础（七）：激活函数" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/03/31/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%83%EF%BC%89%EF%BC%9A%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0/" class="article-date">
+  <time class="dt-published" datetime="2026-03-31T13:38:50.000Z" itemprop="datePublished">2026-03-31</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80/">机器学习基础</a>►<a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2026/03/31/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%83%EF%BC%89%EF%BC%9A%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0/">机器学习基础（七）：激活函数</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="一、引言">一、引言</h2>
+<p>在前面的学习中，我们已经了解了线性回归、损失函数以及反向传播等核心概念。但如果你仔细思考，会发现一个问题：</p>
+<blockquote>
+<p>如果神经网络每一层都只是做“线性变换”，那无论堆多少层，本质上还是一个线性模型。</p>
+</blockquote>
+<p>这显然无法解决复杂问题。</p>
+<p><strong>激活函数（Activation Function）</strong> 的引入，就是为了打破这种“线性限制”，赋予模型学习非线性关系的能力。</p>
+<hr>
+<h2 id="二、什么是激活函数？">二、什么是激活函数？</h2>
+<p>激活函数是加在神经网络每一层输出上的一个<strong>非线性变换函数</strong>，其作用可以简单理解为：</p>
+<blockquote>
+<p>决定一个神经元是否“被激活”（是否传递信息）</p>
+</blockquote>
+<p>数学表达如下：</p>
+<p>对于某一层的输出：</p>
+<p>$$<br>
+z = Wx + b<br>
+$$</p>
+<p>经过激活函数：</p>
+<p>$$<br>
+a = \sigma(z)<br>
+$$</p>
+<p>其中：</p>
+<ul>
+<li>( z )：线性变换结果</li>
+<li>( \sigma )：激活函数</li>
+<li>( a )：最终输出</li>
+</ul>
+<hr>
+<h2 id="三、为什么需要激活函数？">三、为什么需要激活函数？</h2>
+<h3 id="1-引入非线性能力">1. 引入非线性能力</h3>
+<p>没有激活函数：</p>
+<ul>
+<li>多层网络 = 一层线性模型</li>
+<li>表达能力极其有限</li>
+</ul>
+<p>加入激活函数：</p>
+<ul>
+<li>可以拟合复杂函数（图像、文本、语音等）</li>
+</ul>
+<hr>
+<h3 id="2-提高模型表达能力">2. 提高模型表达能力</h3>
+<p>例如：</p>
+<ul>
+<li>图像识别中的边缘检测</li>
+<li>文本中的语义理解</li>
+</ul>
+<p>都依赖非线性结构</p>
+<hr>
+<h3 id="3-控制输出范围">3. 控制输出范围</h3>
+<p>不同激活函数可以：</p>
+<ul>
+<li>限制输出范围（如 Sigmoid）</li>
+<li>保持数值稳定</li>
+</ul>
+<hr>
+<h2 id="四、常见激活函数详解">四、常见激活函数详解</h2>
+<hr>
+<h3 id="1-Sigmoid-函数">1. Sigmoid 函数</h3>
+<p>$$<br>
+\sigma(x) = \frac{1}{1 + e^{-x}}<br>
+$$</p>
+<p><strong>特点：</strong></p>
+<ul>
+<li>输出范围：(0, 1)</li>
+<li>常用于二分类问题</li>
+</ul>
+<p><strong>优点：</strong></p>
+<ul>
+<li>平滑连续</li>
+<li>有概率意义</li>
+</ul>
+<p><strong>缺点：</strong></p>
+<ul>
+<li>梯度消失问题严重</li>
+<li>计算开销较大</li>
+</ul>
+<hr>
+<h3 id="2-Tanh-函数">2. Tanh 函数</h3>
+<p>$$<br>
+\tanh(x) = \frac{e^x - e^{-x}}{e^x + e^{-x}}<br>
+$$</p>
+<p><strong>特点：</strong></p>
+<ul>
+<li>输出范围：(-1, 1)</li>
+<li>比 Sigmoid 更“居中”</li>
+</ul>
+<p><strong>优点：</strong></p>
+<ul>
+<li>收敛速度通常更快</li>
+</ul>
+<p><strong>缺点：</strong></p>
+<ul>
+<li>同样存在梯度消失问题</li>
+</ul>
+<hr>
+<h3 id="3-ReLU（最常用）">3. ReLU（最常用）</h3>
+<p>$$<br>
+\text{ReLU}(x) = \max(0, x)<br>
+$$</p>
+<p><strong>特点：</strong></p>
+<ul>
+<li>小于0 → 输出0</li>
+<li>大于0 → 保持不变</li>
+</ul>
+<p><strong>优点：</strong></p>
+<ul>
+<li>计算简单</li>
+<li>收敛速度快</li>
+<li>缓解梯度消失</li>
+</ul>
+<p><strong>缺点：</strong></p>
+<ul>
+<li>“神经元死亡问题”（Dead ReLU）</li>
+</ul>
+<hr>
+<h3 id="4-Leaky-ReLU（ReLU改进版）">4. Leaky ReLU（ReLU改进版）</h3>
+<p>$$<br>
+f(x) =<br>
+\begin{cases}<br>
+x, &amp; x &gt; 0 <br>
+\alpha x, &amp; x \le 0<br>
+\end{cases}<br>
+$$</p>
+<p><strong>特点：</strong></p>
+<ul>
+<li>负数部分保留一个小斜率</li>
+</ul>
+<p><strong>优点：</strong></p>
+<ul>
+<li>避免神经元死亡</li>
+</ul>
+<hr>
+<h3 id="5-Softmax（输出层常用）">5. Softmax（输出层常用）</h3>
+<p>$$<br>
+\text{Softmax}(x_i) = \frac{e^{x_i}}{\sum_j e^{x_j}}<br>
+$$</p>
+<p><strong>特点：</strong></p>
+<ul>
+<li>输出为概率分布</li>
+<li>总和为1</li>
+</ul>
+<p><strong>用途：</strong></p>
+<ul>
+<li>多分类任务</li>
+</ul>
+<hr>
+<h2 id="五、激活函数的选择策略">五、激活函数的选择策略</h2>
+<h3 id="1-隐藏层推荐">1. 隐藏层推荐</h3>
+<ul>
+<li>默认使用：<strong>ReLU</strong></li>
+<li>若不稳定：尝试 Leaky ReLU</li>
+</ul>
+<hr>
+<h3 id="2-输出层选择">2. 输出层选择</h3>
+<table>
+<thead>
+<tr>
+<th>任务类型</th>
+<th>激活函数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>二分类</td>
+<td>Sigmoid</td>
+</tr>
+<tr>
+<td>多分类</td>
+<td>Softmax</td>
+</tr>
+<tr>
+<td>回归</td>
+<td>无 / 线性</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="六、激活函数与梯度问题">六、激活函数与梯度问题</h2>
+<h3 id="1-梯度消失（Vanishing-Gradient）">1. 梯度消失（Vanishing Gradient）</h3>
+<ul>
+<li>Sigmoid / Tanh 常见</li>
+<li>深层网络训练困难</li>
+</ul>
+<hr>
+<h3 id="2-梯度爆炸（Exploding-Gradient）">2. 梯度爆炸（Exploding Gradient）</h3>
+<ul>
+<li>梯度过大，训练不稳定</li>
+</ul>
+<hr>
+<h3 id="3-解决方法">3. 解决方法</h3>
+<ul>
+<li>使用 ReLU 系列</li>
+<li>合理初始化参数</li>
+<li>使用 Batch Normalization</li>
+</ul>
+<hr>
+<h2 id="七、总结">七、总结</h2>
+<p>激活函数是神经网络的核心组件之一，其本质作用可以总结为：</p>
+<blockquote>
+<p><strong>让模型从“线性计算器”进化为“非线性表达系统”</strong></p>
+</blockquote>
+<p>关键点回顾：</p>
+<ul>
+<li>没有激活函数 → 深度网络毫无意义</li>
+<li>ReLU 是当前最常用选择</li>
+<li>输出层激活函数需根据任务类型决定</li>
+</ul>
+<hr>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://paywqiao-max.github.io/2026/03/31/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%83%EF%BC%89%EF%BC%9A%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0/" data-id="cuid9vA9vOIe4JgMHKQOa0BHY" data-title="机器学习基础（七）：激活函数" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0-%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C-%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0-ReLU/" rel="tag">-机器学习 -深度学习 -神经网络 -激活函数 -ReLU</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-机器学习基础（六）：从0理解线性回归——从公式到代码实现" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
     <a href="/2026/03/30/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%85%AD%EF%BC%89%EF%BC%9A%E4%BB%8E0%E7%90%86%E8%A7%A3%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92%E2%80%94%E2%80%94%E4%BB%8E%E5%85%AC%E5%BC%8F%E5%88%B0%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/" class="article-date">
@@ -250,7 +503,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/03/30/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%85%AD%EF%BC%89%EF%BC%9A%E4%BB%8E0%E7%90%86%E8%A7%A3%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92%E2%80%94%E2%80%94%E4%BB%8E%E5%85%AC%E5%BC%8F%E5%88%B0%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/" data-id="cuid3OzLSfPUFQDohR0WCNc78" data-title="机器学习基础（六）：从0理解线性回归——从公式到代码实现" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/03/30/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%85%AD%EF%BC%89%EF%BC%9A%E4%BB%8E0%E7%90%86%E8%A7%A3%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92%E2%80%94%E2%80%94%E4%BB%8E%E5%85%AC%E5%BC%8F%E5%88%B0%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/" data-id="cuidM-PGJ1bNOeiDF-PrD-Hi4" data-title="机器学习基础（六）：从0理解线性回归——从公式到代码实现" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -428,7 +681,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/03/28/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%BA%94%EF%BC%89%E4%BB%8E0%E7%90%86%E8%A7%A3%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD%EF%BC%9A%E6%A2%AF%E5%BA%A6%E5%88%B0%E5%BA%95%E6%98%AF%E6%80%8E%E4%B9%88%E6%9D%A5%E7%9A%84%EF%BC%9F/" data-id="cuidiL-US63guZdhgun_kxjRU" data-title="机器学习基础（五）从0理解反向传播：梯度到底是怎么来的？" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/03/28/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%BA%94%EF%BC%89%E4%BB%8E0%E7%90%86%E8%A7%A3%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD%EF%BC%9A%E6%A2%AF%E5%BA%A6%E5%88%B0%E5%BA%95%E6%98%AF%E6%80%8E%E4%B9%88%E6%9D%A5%E7%9A%84%EF%BC%9F/" data-id="cuidIapj2ldGjkMTJGdYkj58x" data-title="机器学习基础（五）从0理解反向传播：梯度到底是怎么来的？" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -564,7 +817,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9A%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0%E4%B8%8E%E4%BC%98%E5%8C%96%E7%9B%AE%E6%A0%87/" data-id="cuidfjqzC-za08GD2ELXCZLSU" data-title="机器学习基础（四）：损失函数与优化目标" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9A%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0%E4%B8%8E%E4%BC%98%E5%8C%96%E7%9B%AE%E6%A0%87/" data-id="cuid7_DNHQSteLXo_G7IcvtK9" data-title="机器学习基础（四）：损失函数与优化目标" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -774,7 +1027,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9A%E4%BB%8E%E6%AC%A7%E5%BC%8F%E8%B7%9D%E7%A6%BB%E5%88%B0%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" data-id="cuidJ8sksXnt_m-ngDgeGNUi1" data-title="机器学习基础（三）：从欧式距离到梯度下降" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9A%E4%BB%8E%E6%AC%A7%E5%BC%8F%E8%B7%9D%E7%A6%BB%E5%88%B0%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" data-id="cuiduFUmMbzDKqzRYQznSlRS7" data-title="机器学习基础（三）：从欧式距离到梯度下降" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -1145,7 +1398,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/03/25/DAY2-%E7%9F%A9%E9%98%B5%E5%9F%BA%E7%A1%80%E4%B8%8E%E5%87%A0%E4%BD%95%E6%84%8F%E4%B9%89/" data-id="cuidi7URDyxRivk8wQGWcvki0" data-title="机器学习基础（二）：向量空间与线性代数入门" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/03/25/DAY2-%E7%9F%A9%E9%98%B5%E5%9F%BA%E7%A1%80%E4%B8%8E%E5%87%A0%E4%BD%95%E6%84%8F%E4%B9%89/" data-id="cuidUL8cXf6JML6iy0sAZPyUs" data-title="机器学习基础（二）：向量空间与线性代数入门" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -1258,7 +1511,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/03/24/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8/" data-id="cuidN_iBjFtZpiHU7Vo6UvKjW" data-title="机器学习基础（一）：从向量到矩阵变换" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/03/24/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8/" data-id="cuid_4LnRstbUxkQc0Sx4LRY_" data-title="机器学习基础（一）：从向量到矩阵变换" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -1282,7 +1535,7 @@ $$</p>
   <div class="widget-wrap">
     <h3 class="widget-title">分类</h3>
     <div class="widget">
-      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80/">机器学习基础</a></li></ul>
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80/">机器学习基础</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a></li></ul></li></ul>
     </div>
   </div>
 
@@ -1292,7 +1545,7 @@ $$</p>
   <div class="widget-wrap">
     <h3 class="widget-title">标签</h3>
     <div class="widget">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/NumPy/" rel="tag">NumPy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Python/" rel="tag">Python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%8E0%E5%BC%80%E5%A7%8B/" rel="tag">从0开始</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" rel="tag">优化方法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD/" rel="tag">反向传播</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" rel="tag">学习记录</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" rel="tag">数学基础</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" rel="tag">梯度下降</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" rel="tag">深度学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" rel="tag">线性代数</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92/" rel="tag">线性回归</a></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0-%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C-%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0-ReLU/" rel="tag">-机器学习 -深度学习 -神经网络 -激活函数 -ReLU</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NumPy/" rel="tag">NumPy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Python/" rel="tag">Python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%8E0%E5%BC%80%E5%A7%8B/" rel="tag">从0开始</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" rel="tag">优化方法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD/" rel="tag">反向传播</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" rel="tag">学习记录</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" rel="tag">数学基础</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" rel="tag">梯度下降</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" rel="tag">深度学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" rel="tag">线性代数</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92/" rel="tag">线性回归</a></li></ul>
     </div>
   </div>
 
@@ -1302,7 +1555,7 @@ $$</p>
   <div class="widget-wrap">
     <h3 class="widget-title">标签云</h3>
     <div class="widget tagcloud">
-      <a href="/tags/NumPy/" style="font-size: 13.33px;">NumPy</a> <a href="/tags/Python/" style="font-size: 10px;">Python</a> <a href="/tags/%E4%BB%8E0%E5%BC%80%E5%A7%8B/" style="font-size: 10px;">从0开始</a> <a href="/tags/%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" style="font-size: 10px;">优化方法</a> <a href="/tags/%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD/" style="font-size: 10px;">反向传播</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" style="font-size: 16.67px;">学习记录</a> <a href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" style="font-size: 13.33px;">数学基础</a> <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" style="font-size: 20px;">机器学习</a> <a href="/tags/%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" style="font-size: 13.33px;">梯度下降</a> <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" style="font-size: 10px;">深度学习</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" style="font-size: 16.67px;">线性代数</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92/" style="font-size: 10px;">线性回归</a>
+      <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0-%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C-%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0-ReLU/" style="font-size: 10px;">-机器学习 -深度学习 -神经网络 -激活函数 -ReLU</a> <a href="/tags/NumPy/" style="font-size: 13.33px;">NumPy</a> <a href="/tags/Python/" style="font-size: 10px;">Python</a> <a href="/tags/%E4%BB%8E0%E5%BC%80%E5%A7%8B/" style="font-size: 10px;">从0开始</a> <a href="/tags/%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" style="font-size: 10px;">优化方法</a> <a href="/tags/%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD/" style="font-size: 10px;">反向传播</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" style="font-size: 16.67px;">学习记录</a> <a href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" style="font-size: 13.33px;">数学基础</a> <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" style="font-size: 20px;">机器学习</a> <a href="/tags/%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" style="font-size: 13.33px;">梯度下降</a> <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" style="font-size: 10px;">深度学习</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" style="font-size: 16.67px;">线性代数</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92/" style="font-size: 10px;">线性回归</a>
     </div>
   </div>
 
@@ -1324,6 +1577,10 @@ $$</p>
       <ul>
         
           <li>
+            <a href="/2026/03/31/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%83%EF%BC%89%EF%BC%9A%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0/">机器学习基础（七）：激活函数</a>
+          </li>
+        
+          <li>
             <a href="/2026/03/30/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%85%AD%EF%BC%89%EF%BC%9A%E4%BB%8E0%E7%90%86%E8%A7%A3%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92%E2%80%94%E2%80%94%E4%BB%8E%E5%85%AC%E5%BC%8F%E5%88%B0%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/">机器学习基础（六）：从0理解线性回归——从公式到代码实现</a>
           </li>
         
@@ -1337,10 +1594,6 @@ $$</p>
         
           <li>
             <a href="/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9A%E4%BB%8E%E6%AC%A7%E5%BC%8F%E8%B7%9D%E7%A6%BB%E5%88%B0%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/">机器学习基础（三）：从欧式距离到梯度下降</a>
-          </li>
-        
-          <li>
-            <a href="/2026/03/25/DAY2-%E7%9F%A9%E9%98%B5%E5%9F%BA%E7%A1%80%E4%B8%8E%E5%87%A0%E4%BD%95%E6%84%8F%E4%B9%89/">机器学习基础（二）：向量空间与线性代数入门</a>
           </li>
         
       </ul>
