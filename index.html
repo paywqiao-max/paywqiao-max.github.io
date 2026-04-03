@@ -88,6 +88,474 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-机器学习基础（十）：卷积神经网络CNN" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/04/03/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%EF%BC%89%EF%BC%9A%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9CCNN/" class="article-date">
+  <time class="dt-published" datetime="2026-04-03T14:55:00.000Z" itemprop="datePublished">2026-04-03</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80/">机器学习基础</a>►<a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2026/04/03/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%EF%BC%89%EF%BC%9A%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9CCNN/">机器学习基础（十）：卷积神经网络CNN</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="一、引言">一、引言</h2>
+<p>在前面的学习中，我们已经掌握了 PyTorch 的基础用法，能够构建简单的全连接神经网络。但当面对图像数据时，我们遇到了新的问题：</p>
+<blockquote>
+<p>一张 224×224 的彩色图像有 150,528 个像素，如果用全连接层处理，参数量会爆炸！</p>
+</blockquote>
+<p><strong>全连接网络的困境：</strong></p>
+<ul>
+<li><strong>参数过多</strong>：导致过拟合风险增加</li>
+<li><strong>忽略空间结构</strong>：将图像展平为一维向量，丢失了像素间的空间关系</li>
+<li><strong>计算效率低</strong>：大量冗余计算</li>
+</ul>
+<p><strong>卷积神经网络（Convolutional Neural Network, CNN）</strong> 正是为解决这些问题而生。它通过<strong>卷积操作</strong>提取图像特征，既减少了参数量，又保留了空间信息，是计算机视觉领域的基石。</p>
+<hr>
+<h2 id="二、什么是卷积？">二、什么是卷积？</h2>
+<h3 id="1-卷积的直观理解">1. 卷积的直观理解</h3>
+<p>卷积是一种特殊的线性运算，它使用一个**卷积核（Kernel/Filter）**在输入数据上滑动，进行局部加权求和。</p>
+<p><strong>类比：用放大镜观察图片</strong></p>
+<ul>
+<li>卷积核就像放大镜，一次只看图像的一小块区域</li>
+<li>滑动扫描整幅图像，提取不同位置的特征</li>
+</ul>
+<h3 id="2-卷积的数学定义">2. 卷积的数学定义</h3>
+<p>对于二维图像，卷积运算定义为：</p>
+<p>$$<br>
+(I * K)(i, j) = \sum_{m}\sum_{n} I(i+m, j+n) \cdot K(m, n)<br>
+$$</p>
+<p>其中：</p>
+<ul>
+<li>$I$ 是输入图像</li>
+<li>$K$ 是卷积核（通常大小为 3×3 或 5×5）</li>
+<li>$(i, j)$ 是输出位置</li>
+</ul>
+<h3 id="3-卷积操作示例">3. 卷积操作示例</h3>
+<p>假设有一个 5×5 的输入图像和一个 3×3 的卷积核：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">输入图像:          卷积核:</span><br><span class="line">1 1 1 0 0          1 0 1</span><br><span class="line">0 1 1 1 0          0 1 0</span><br><span class="line">0 0 1 1 1          1 0 1</span><br><span class="line">0 0 1 1 0</span><br><span class="line">0 1 1 0 0</span><br></pre></td></tr></table></figure>
+<p>卷积过程（步长=1，无填充）：</p>
+<ol>
+<li>将卷积核放在图像左上角</li>
+<li>对应元素相乘后求和</li>
+<li>向右滑动，重复计算</li>
+<li>到达边界后向下滑动一行</li>
+</ol>
+<p><strong>输出特征图大小计算：</strong></p>
+<p>$$<br>
+Output Size = \frac{Input Size - Kernel Size + 2 \times Padding}{Stride} + 1<br>
+$$</p>
+<hr>
+<h2 id="三、CNN-的核心组件">三、CNN 的核心组件</h2>
+<h3 id="1-卷积层（Convolutional-Layer）">1. 卷积层（Convolutional Layer）</h3>
+<p><strong>作用</strong>：提取图像的局部特征（如边缘、纹理、形状）</p>
+<p><strong>关键参数：</strong></p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>说明</th>
+<th>常用值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>kernel_size</code></td>
+<td>卷积核大小</td>
+<td>3×3, 5×5, 7×7</td>
+</tr>
+<tr>
+<td><code>stride</code></td>
+<td>步长（滑动间隔）</td>
+<td>1, 2</td>
+</tr>
+<tr>
+<td><code>padding</code></td>
+<td>边缘填充</td>
+<td>0, 1, ‘same’</td>
+</tr>
+<tr>
+<td><code>channels</code></td>
+<td>输出通道数（卷积核数量）</td>
+<td>32, 64, 128, 256</td>
+</tr>
+</tbody>
+</table>
+<p><strong>PyTorch 实现：</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn</span><br><span class="line"></span><br><span class="line"><span class="comment"># 输入通道=3（RGB），输出通道=64，卷积核=3×3</span></span><br><span class="line">conv_layer = nn.Conv2d(</span><br><span class="line">    in_channels=<span class="number">3</span>, </span><br><span class="line">    out_channels=<span class="number">64</span>, </span><br><span class="line">    kernel_size=<span class="number">3</span>, </span><br><span class="line">    stride=<span class="number">1</span>, </span><br><span class="line">    padding=<span class="number">1</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<h3 id="2-激活函数">2. 激活函数</h3>
+<p>卷积后通常接激活函数引入非线性：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ReLU 是最常用的选择</span></span><br><span class="line">relu = nn.ReLU()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 卷积 + 激活</span></span><br><span class="line">output = relu(conv_layer(<span class="built_in">input</span>))</span><br></pre></td></tr></table></figure>
+<h3 id="3-池化层（Pooling-Layer）">3. 池化层（Pooling Layer）</h3>
+<p><strong>作用</strong>：降低特征图尺寸，减少计算量，增强平移不变性</p>
+<p><strong>类型：</strong></p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>操作</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Max Pooling</strong></td>
+<td>取窗口内最大值</td>
+<td>保留最强特征，最常用</td>
+</tr>
+<tr>
+<td><strong>Average Pooling</strong></td>
+<td>取窗口内平均值</td>
+<td>保留背景信息</td>
+</tr>
+</tbody>
+</table>
+<p><strong>PyTorch 实现：</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 2×2 最大池化，步长=2</span></span><br><span class="line">max_pool = nn.MaxPool2d(kernel_size=<span class="number">2</span>, stride=<span class="number">2</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2×2 平均池化</span></span><br><span class="line">avg_pool = nn.AvgPool2d(kernel_size=<span class="number">2</span>, stride=<span class="number">2</span>)</span><br></pre></td></tr></table></figure>
+<p><strong>池化效果</strong>：特征图尺寸减半（2×2 池化 + 步长2）</p>
+<h3 id="4-批归一化（Batch-Normalization）">4. 批归一化（Batch Normalization）</h3>
+<p><strong>作用</strong>：加速训练收敛，提高模型稳定性，减少对初始化的敏感</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 对 64 通道的特征图进行批归一化</span></span><br><span class="line">bn = nn.BatchNorm2d(num_features=<span class="number">64</span>)</span><br></pre></td></tr></table></figure>
+<h3 id="5-全连接层（Fully-Connected-Layer）">5. 全连接层（Fully Connected Layer）</h3>
+<p><strong>作用</strong>：将卷积层提取的特征映射到最终的分类结果</p>
+<p>通常位于网络末端，前面需要将特征图展平：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 假设经过卷积和池化后，特征图为 [batch, 512, 7, 7]</span></span><br><span class="line">flatten = nn.Flatten()  <span class="comment"># 展平为 [batch, 512*7*7]</span></span><br><span class="line">fc = nn.Linear(<span class="number">512</span>*<span class="number">7</span>*<span class="number">7</span>, num_classes)  <span class="comment"># 映射到类别数</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="四、经典-CNN-架构">四、经典 CNN 架构</h2>
+<h3 id="1-LeNet-5（1998）">1. LeNet-5（1998）</h3>
+<p><strong>开创者</strong>：Yann LeCun</p>
+<p><strong>结构</strong>：卷积 → 池化 → 卷积 → 池化 → 全连接</p>
+<p><strong>特点</strong>：</p>
+<ul>
+<li>首个成功的 CNN 架构</li>
+<li>用于手写数字识别（MNIST）</li>
+<li>奠定了 CNN 的基本范式</li>
+</ul>
+<h3 id="2-AlexNet（2012）">2. AlexNet（2012）</h3>
+<p><strong>突破</strong>：ImageNet 竞赛冠军，开启深度学习时代</p>
+<p><strong>创新点</strong>：</p>
+<ul>
+<li>使用 ReLU 激活函数</li>
+<li>引入 Dropout 防止过拟合</li>
+<li>使用 GPU 加速训练</li>
+</ul>
+<p><strong>结构</strong>：5 层卷积 + 3 层全连接</p>
+<h3 id="3-VGGNet（2014）">3. VGGNet（2014）</h3>
+<p><strong>核心思想</strong>：使用更小的卷积核（3×3）增加网络深度</p>
+<p><strong>特点</strong>：</p>
+<ul>
+<li>VGG-16：13 层卷积 + 3 层全连接</li>
+<li>VGG-19：16 层卷积 + 3 层全连接</li>
+<li>结构规整，易于理解和实现</li>
+</ul>
+<h3 id="4-ResNet（2015）">4. ResNet（2015）</h3>
+<p><strong>革命性创新</strong>：残差连接（Residual Connection）</p>
+<p><strong>解决的问题</strong>：深层网络训练困难（梯度消失）</p>
+<p><strong>核心公式</strong>：</p>
+<p>$$<br>
+y = F(x) + x<br>
+$$</p>
+<p><strong>特点</strong>：</p>
+<ul>
+<li>ResNet-18/34/50/101/152</li>
+<li>可以训练超过 100 层的网络</li>
+<li>当前最广泛使用的骨干网络</li>
+</ul>
+<hr>
+<h2 id="五、CNN-的训练技巧">五、CNN 的训练技巧</h2>
+<h3 id="1-数据增强（Data-Augmentation）">1. 数据增强（Data Augmentation）</h3>
+<p>通过对训练图像进行随机变换，增加数据多样性：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> torchvision <span class="keyword">import</span> transforms</span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义数据增强</span></span><br><span class="line">train_transform = transforms.Compose([</span><br><span class="line">    transforms.RandomResizedCrop(<span class="number">224</span>),      <span class="comment"># 随机裁剪</span></span><br><span class="line">    transforms.RandomHorizontalFlip(),       <span class="comment"># 随机水平翻转</span></span><br><span class="line">    transforms.RandomRotation(<span class="number">10</span>),           <span class="comment"># 随机旋转</span></span><br><span class="line">    transforms.ColorJitter(brightness=<span class="number">0.2</span>,   <span class="comment"># 颜色抖动</span></span><br><span class="line">                          contrast=<span class="number">0.2</span>),</span><br><span class="line">    transforms.ToTensor(),</span><br><span class="line">    transforms.Normalize(mean=[<span class="number">0.485</span>, <span class="number">0.456</span>, <span class="number">0.406</span>],</span><br><span class="line">                        std=[<span class="number">0.229</span>, <span class="number">0.224</span>, <span class="number">0.225</span>])</span><br><span class="line">])</span><br></pre></td></tr></table></figure>
+<h3 id="2-学习率调度（Learning-Rate-Scheduling）">2. 学习率调度（Learning Rate Scheduling）</h3>
+<p>学习率调度是训练深度神经网络的关键技巧。<strong>为什么需要调整学习率？</strong></p>
+<blockquote>
+<p><strong>直观理解</strong>：训练初期需要&quot;大步流星&quot;快速接近最优解，后期需要&quot;小心翼翼&quot;精细调整。</p>
+</blockquote>
+<p><strong>固定学习率的问题：</strong></p>
+<ul>
+<li>学习率太大 → 震荡不收敛，甚至发散</li>
+<li>学习率太小 → 收敛极慢，陷入局部最优</li>
+</ul>
+<h4 id="常用学习率调度策略">常用学习率调度策略</h4>
+<p><strong>（1）StepLR - 阶梯衰减</strong></p>
+<p>每隔固定轮数，学习率乘以衰减系数：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 每 7 个 epoch，学习率乘以 0.1</span></span><br><span class="line">scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=<span class="number">7</span>, gamma=<span class="number">0.1</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 训练循环中</span></span><br><span class="line"><span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="built_in">range</span>(num_epochs):</span><br><span class="line">    train(...)</span><br><span class="line">    scheduler.step()  <span class="comment"># 更新学习率</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;当前学习率: <span class="subst">&#123;optimizer.param_groups[<span class="number">0</span>][<span class="string">&quot;lr&quot;</span>]&#125;</span>&#x27;</span>)</span><br></pre></td></tr></table></figure>
+<p><strong>效果示例</strong>：初始 lr=0.1</p>
+<ul>
+<li>Epoch 1-7: lr = 0.1</li>
+<li>Epoch 8-14: lr = 0.01</li>
+<li>Epoch 15-21: lr = 0.001</li>
+</ul>
+<hr>
+<p><strong>（2）MultiStepLR - 多阶段衰减</strong></p>
+<p>在指定的里程碑 epoch 进行衰减：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在第 30、60、90 轮分别衰减</span></span><br><span class="line">scheduler = optim.lr_scheduler.MultiStepLR(</span><br><span class="line">    optimizer, milestones=[<span class="number">30</span>, <span class="number">60</span>, <span class="number">90</span>], gamma=<span class="number">0.1</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<hr>
+<p><strong>（3）ExponentialLR - 指数衰减</strong></p>
+<p>每轮都按指数衰减：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 每轮学习率乘以 0.95</span></span><br><span class="line">scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=<span class="number">0.95</span>)</span><br></pre></td></tr></table></figure>
+<p>公式：$lr_{epoch} = lr_{initial} \times \gamma^{epoch}$</p>
+<hr>
+<p><strong>（4）CosineAnnealingLR - 余弦退火</strong> ⭐推荐</p>
+<p>学习率按余弦曲线变化，常用于现代深度学习：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># T_max: 半个余弦周期的长度</span></span><br><span class="line">scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=<span class="number">200</span>)</span><br></pre></td></tr></table></figure>
+<p>公式：$\eta_t = \eta_{min} + \frac{1}{2}(\eta_{max} - \eta_{min})(1 + \cos(\frac{T_{cur}}{T_{max}}\pi))$</p>
+<p><strong>特点</strong>：</p>
+<ul>
+<li>平滑下降，避免学习率骤变</li>
+<li>周期性重启，有助于跳出局部最优</li>
+<li>ResNet、EfficientNet 等现代架构常用</li>
+</ul>
+<hr>
+<p><strong>（5）ReduceLROnPlateau - 自适应衰减</strong></p>
+<p>当验证指标停止改善时自动降低学习率：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">scheduler = optim.lr_scheduler.ReduceLROnPlateau(</span><br><span class="line">    optimizer, mode=<span class="string">&#x27;max&#x27;</span>,    <span class="comment"># &#x27;max&#x27; 表示监控指标越大越好（如准确率）</span></span><br><span class="line">    factor=<span class="number">0.1</span>,               <span class="comment"># 衰减系数</span></span><br><span class="line">    patience=<span class="number">5</span>,               <span class="comment"># 容忍 5 轮不改善</span></span><br><span class="line">    verbose=<span class="literal">True</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 训练循环中</span></span><br><span class="line"><span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="built_in">range</span>(num_epochs):</span><br><span class="line">    train(...)</span><br><span class="line">    val_acc = validate(...)</span><br><span class="line">    scheduler.step(val_acc)  <span class="comment"># 传入监控指标</span></span><br></pre></td></tr></table></figure>
+<p><strong>这是最实用的策略之一</strong>，无需预设衰减时机，自动适应训练情况。</p>
+<hr>
+<p><strong>（6）OneCycleLR - 单周期策略</strong> ⭐⭐强烈推荐</p>
+<p>先线性升温到最大学习率，再余弦降温到最小学习率：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">scheduler = optim.lr_scheduler.OneCycleLR(</span><br><span class="line">    optimizer,</span><br><span class="line">    max_lr=<span class="number">0.1</span>,                    <span class="comment"># 最大学习率</span></span><br><span class="line">    total_steps=num_epochs * <span class="built_in">len</span>(train_loader),  <span class="comment"># 总步数</span></span><br><span class="line">    pct_start=<span class="number">0.3</span>,                 <span class="comment"># 升温阶段占比</span></span><br><span class="line">    anneal_strategy=<span class="string">&#x27;cos&#x27;</span>          <span class="comment"># 降温策略</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 注意：每个 batch 都要 step()</span></span><br><span class="line"><span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="built_in">range</span>(num_epochs):</span><br><span class="line">    <span class="keyword">for</span> batch <span class="keyword">in</span> train_loader:</span><br><span class="line">        train_batch(...)</span><br><span class="line">        scheduler.step()</span><br></pre></td></tr></table></figure>
+<p><strong>优势</strong>：</p>
+<ul>
+<li>训练速度更快</li>
+<li>通常能达到更好的最终性能</li>
+<li><a target="_blank" rel="noopener" href="http://Fast.ai">Fast.ai</a> 库的核心技巧</li>
+</ul>
+<hr>
+<h4 id="学习率调度选择建议">学习率调度选择建议</h4>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>推荐策略</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>快速实验</td>
+<td>StepLR、MultiStepLR</td>
+</tr>
+<tr>
+<td>追求最佳性能</td>
+<td>OneCycleLR、CosineAnnealingLR</td>
+</tr>
+<tr>
+<td>不想调参</td>
+<td>ReduceLROnPlateau</td>
+</tr>
+<tr>
+<td>训练不稳定</td>
+<td>先用小学习率 + 线性升温</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键经验</strong>：</p>
+<ul>
+<li>学习率通常是最重要的超参数</li>
+<li>好的学习率调度可以让模型提升 1-3% 的准确率</li>
+<li>建议配合 <strong>学习率预热（Warmup）</strong> 使用，前几个 epoch 从小学习率逐渐增大</li>
+</ul>
+<h3 id="3-早停（Early-Stopping）">3. 早停（Early Stopping）</h3>
+<p>当验证集性能不再提升时停止训练，防止过拟合：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">best_acc = <span class="number">0.0</span></span><br><span class="line">patience = <span class="number">5</span></span><br><span class="line">counter = <span class="number">0</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="built_in">range</span>(num_epochs):</span><br><span class="line">    train(...)</span><br><span class="line">    val_acc = validate(...)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> val_acc &gt; best_acc:</span><br><span class="line">        best_acc = val_acc</span><br><span class="line">        torch.save(model.state_dict(), <span class="string">&#x27;best_model.pth&#x27;</span>)</span><br><span class="line">        counter = <span class="number">0</span></span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        counter += <span class="number">1</span></span><br><span class="line">        <span class="keyword">if</span> counter &gt;= patience:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">f&#x27;早停于 epoch <span class="subst">&#123;epoch&#125;</span>&#x27;</span>)</span><br><span class="line">            <span class="keyword">break</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="六、代码实战：MNIST-手写数字识别">六、代码实战：MNIST 手写数字识别</h2>
+<p>下面是一个完整的 MNIST 手写数字识别示例，使用简单的 CNN 架构：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> torch</span><br><span class="line"><span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn</span><br><span class="line"><span class="keyword">import</span> torch.optim <span class="keyword">as</span> optim</span><br><span class="line"><span class="keyword">import</span> torchvision</span><br><span class="line"><span class="keyword">import</span> torchvision.transforms <span class="keyword">as</span> transforms</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置设备</span></span><br><span class="line">device = torch.device(<span class="string">&#x27;cuda&#x27;</span> <span class="keyword">if</span> torch.cuda.is_available() <span class="keyword">else</span> <span class="string">&#x27;cpu&#x27;</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;使用设备: <span class="subst">&#123;device&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># ==================== 1. 数据准备 ====================</span></span><br><span class="line"><span class="comment"># MNIST 数据集：手写数字 0-9，28x28 灰度图像</span></span><br><span class="line">transform = transforms.Compose([</span><br><span class="line">    transforms.ToTensor(),  <span class="comment"># 转换为 Tensor，归一化到 [0, 1]</span></span><br><span class="line">    transforms.Normalize((<span class="number">0.1307</span>,), (<span class="number">0.3081</span>,))  <span class="comment"># MNIST 标准归一化参数</span></span><br><span class="line">])</span><br><span class="line"></span><br><span class="line"><span class="comment"># 加载数据集</span></span><br><span class="line">train_dataset = torchvision.datasets.MNIST(</span><br><span class="line">    root=<span class="string">&#x27;./data&#x27;</span>, train=<span class="literal">True</span>, download=<span class="literal">True</span>, transform=transform)</span><br><span class="line">test_dataset = torchvision.datasets.MNIST(</span><br><span class="line">    root=<span class="string">&#x27;./data&#x27;</span>, train=<span class="literal">False</span>, download=<span class="literal">True</span>, transform=transform)</span><br><span class="line"></span><br><span class="line">train_loader = torch.utils.data.DataLoader(</span><br><span class="line">    train_dataset, batch_size=<span class="number">64</span>, shuffle=<span class="literal">True</span>)</span><br><span class="line">test_loader = torch.utils.data.DataLoader(</span><br><span class="line">    test_dataset, batch_size=<span class="number">64</span>, shuffle=<span class="literal">False</span>)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;训练集大小: <span class="subst">&#123;<span class="built_in">len</span>(train_dataset)&#125;</span>&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;测试集大小: <span class="subst">&#123;<span class="built_in">len</span>(test_dataset)&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># ==================== 2. 定义 CNN 模型 ====================</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">CNN</span>(nn.Module):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;简单的 CNN 用于 MNIST 手写数字识别&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="built_in">super</span>(CNN, <span class="variable language_">self</span>).__init__()</span><br><span class="line">        <span class="comment"># 卷积层 1: 1@28x28 -&gt; 32@28x28 -&gt; 32@14x14 (池化后)</span></span><br><span class="line">        <span class="variable language_">self</span>.conv1 = nn.Conv2d(<span class="number">1</span>, <span class="number">32</span>, kernel_size=<span class="number">3</span>, padding=<span class="number">1</span>)</span><br><span class="line">        <span class="variable language_">self</span>.bn1 = nn.BatchNorm2d(<span class="number">32</span>)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 卷积层 2: 32@14x14 -&gt; 64@14x14 -&gt; 64@7x7 (池化后)</span></span><br><span class="line">        <span class="variable language_">self</span>.conv2 = nn.Conv2d(<span class="number">32</span>, <span class="number">64</span>, kernel_size=<span class="number">3</span>, padding=<span class="number">1</span>)</span><br><span class="line">        <span class="variable language_">self</span>.bn2 = nn.BatchNorm2d(<span class="number">64</span>)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 池化层</span></span><br><span class="line">        <span class="variable language_">self</span>.pool = nn.MaxPool2d(<span class="number">2</span>, <span class="number">2</span>)</span><br><span class="line">        <span class="variable language_">self</span>.dropout = nn.Dropout(<span class="number">0.25</span>)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 全连接层: 64@7x7 = 3136 -&gt; 128 -&gt; 10</span></span><br><span class="line">        <span class="variable language_">self</span>.fc1 = nn.Linear(<span class="number">64</span> * <span class="number">7</span> * <span class="number">7</span>, <span class="number">128</span>)</span><br><span class="line">        <span class="variable language_">self</span>.fc2 = nn.Linear(<span class="number">128</span>, <span class="number">10</span>)</span><br><span class="line">        <span class="variable language_">self</span>.relu = nn.ReLU()</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, x</span>):</span><br><span class="line">        <span class="comment"># 卷积块 1</span></span><br><span class="line">        x = <span class="variable language_">self</span>.relu(<span class="variable language_">self</span>.bn1(<span class="variable language_">self</span>.conv1(x)))  <span class="comment"># [batch, 32, 28, 28]</span></span><br><span class="line">        x = <span class="variable language_">self</span>.pool(x)                         <span class="comment"># [batch, 32, 14, 14]</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 卷积块 2</span></span><br><span class="line">        x = <span class="variable language_">self</span>.relu(<span class="variable language_">self</span>.bn2(<span class="variable language_">self</span>.conv2(x)))  <span class="comment"># [batch, 64, 14, 14]</span></span><br><span class="line">        x = <span class="variable language_">self</span>.pool(x)                         <span class="comment"># [batch, 64, 7, 7]</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 展平</span></span><br><span class="line">        x = x.view(x.size(<span class="number">0</span>), -<span class="number">1</span>)               <span class="comment"># [batch, 3136]</span></span><br><span class="line">        x = <span class="variable language_">self</span>.dropout(x)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 全连接</span></span><br><span class="line">        x = <span class="variable language_">self</span>.relu(<span class="variable language_">self</span>.fc1(x))              <span class="comment"># [batch, 128]</span></span><br><span class="line">        x = <span class="variable language_">self</span>.fc2(x)                          <span class="comment"># [batch, 10]</span></span><br><span class="line">        <span class="keyword">return</span> x</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># ==================== 3. 训练 ====================</span></span><br><span class="line">model = CNN().to(device)</span><br><span class="line">criterion = nn.CrossEntropyLoss()</span><br><span class="line">optimizer = optim.Adam(model.parameters(), lr=<span class="number">0.001</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 统计信息</span></span><br><span class="line">train_losses = []</span><br><span class="line">train_accuracies = []</span><br><span class="line">test_accuracies = []</span><br><span class="line"></span><br><span class="line"><span class="comment"># 训练函数</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">train</span>(<span class="params">epoch</span>):</span><br><span class="line">    model.train()</span><br><span class="line">    running_loss = <span class="number">0.0</span></span><br><span class="line">    correct = <span class="number">0</span></span><br><span class="line">    total = <span class="number">0</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> batch_idx, (inputs, targets) <span class="keyword">in</span> <span class="built_in">enumerate</span>(train_loader):</span><br><span class="line">        inputs, targets = inputs.to(device), targets.to(device)</span><br><span class="line">        </span><br><span class="line">        optimizer.zero_grad()</span><br><span class="line">        outputs = model(inputs)</span><br><span class="line">        loss = criterion(outputs, targets)</span><br><span class="line">        loss.backward()</span><br><span class="line">        optimizer.step()</span><br><span class="line">        </span><br><span class="line">        running_loss += loss.item()</span><br><span class="line">        _, predicted = outputs.<span class="built_in">max</span>(<span class="number">1</span>)</span><br><span class="line">        total += targets.size(<span class="number">0</span>)</span><br><span class="line">        correct += predicted.eq(targets).<span class="built_in">sum</span>().item()</span><br><span class="line">    </span><br><span class="line">    epoch_loss = running_loss / <span class="built_in">len</span>(train_loader)</span><br><span class="line">    epoch_acc = <span class="number">100.</span> * correct / total</span><br><span class="line">    train_losses.append(epoch_loss)</span><br><span class="line">    train_accuracies.append(epoch_acc)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;Epoch <span class="subst">&#123;epoch&#125;</span>: 训练损失: <span class="subst">&#123;epoch_loss:<span class="number">.4</span>f&#125;</span>, 训练准确率: <span class="subst">&#123;epoch_acc:<span class="number">.2</span>f&#125;</span>%&#x27;</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 测试函数</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">test</span>():</span><br><span class="line">    model.<span class="built_in">eval</span>()</span><br><span class="line">    correct = <span class="number">0</span></span><br><span class="line">    total = <span class="number">0</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">with</span> torch.no_grad():</span><br><span class="line">        <span class="keyword">for</span> inputs, targets <span class="keyword">in</span> test_loader:</span><br><span class="line">            inputs, targets = inputs.to(device), targets.to(device)</span><br><span class="line">            outputs = model(inputs)</span><br><span class="line">            _, predicted = outputs.<span class="built_in">max</span>(<span class="number">1</span>)</span><br><span class="line">            total += targets.size(<span class="number">0</span>)</span><br><span class="line">            correct += predicted.eq(targets).<span class="built_in">sum</span>().item()</span><br><span class="line">    </span><br><span class="line">    acc = <span class="number">100.</span> * correct / total</span><br><span class="line">    test_accuracies.append(acc)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;测试准确率: <span class="subst">&#123;acc:<span class="number">.2</span>f&#125;</span>%&#x27;</span>)</span><br><span class="line">    <span class="keyword">return</span> acc</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 开始训练</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;\n开始训练...&quot;</span>)</span><br><span class="line">start_time = time.time()</span><br><span class="line"></span><br><span class="line">num_epochs = <span class="number">5</span></span><br><span class="line"><span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>, num_epochs + <span class="number">1</span>):</span><br><span class="line">    train(epoch)</span><br><span class="line">    test()</span><br><span class="line"></span><br><span class="line">end_time = time.time()</span><br><span class="line">training_time = end_time - start_time</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&#x27;\n训练完成！总耗时: <span class="subst">&#123;training_time:<span class="number">.2</span>f&#125;</span>秒&#x27;</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&#x27;最终测试准确率: <span class="subst">&#123;test_accuracies[-<span class="number">1</span>]:<span class="number">.2</span>f&#125;</span>%&#x27;</span>)</span><br></pre></td></tr></table></figure>
+<h3 id="训练结果">训练结果</h3>
+<p>在 NVIDIA GPU 上训练 5 个 epoch 的典型结果：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">Epoch</th>
+<th style="text-align:center">训练损失</th>
+<th style="text-align:center">训练准确率</th>
+<th style="text-align:center">测试准确率</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">1</td>
+<td style="text-align:center">0.2156</td>
+<td style="text-align:center">93.45%</td>
+<td style="text-align:center">98.20%</td>
+</tr>
+<tr>
+<td style="text-align:center">2</td>
+<td style="text-align:center">0.0689</td>
+<td style="text-align:center">97.89%</td>
+<td style="text-align:center">98.85%</td>
+</tr>
+<tr>
+<td style="text-align:center">3</td>
+<td style="text-align:center">0.0512</td>
+<td style="text-align:center">98.42%</td>
+<td style="text-align:center">99.05%</td>
+</tr>
+<tr>
+<td style="text-align:center">4</td>
+<td style="text-align:center">0.0418</td>
+<td style="text-align:center">98.71%</td>
+<td style="text-align:center">99.15%</td>
+</tr>
+<tr>
+<td style="text-align:center">5</td>
+<td style="text-align:center">0.0356</td>
+<td style="text-align:center">98.89%</td>
+<td style="text-align:center"><strong>99.20%</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键结论：</strong></p>
+<ul>
+<li>✅ 仅需 5 轮训练，测试准确率即可达到 <strong>99% 以上</strong></li>
+<li>✅ 训练时间约 30-60 秒（GPU）或 2-3 分钟（CPU）</li>
+<li>✅ CNN 对 MNIST 这种简单图像分类任务非常高效</li>
+<li>✅ 模型参数量约 50 万，远小于全连接网络</li>
+</ul>
+<hr>
+<h2 id="七、CNN-的优缺点">七、CNN 的优缺点</h2>
+<h3 id="优点">优点</h3>
+<table>
+<thead>
+<tr>
+<th>优点</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>参数共享</strong></td>
+<td>卷积核在整个图像上共享，大幅减少参数量</td>
+</tr>
+<tr>
+<td><strong>局部连接</strong></td>
+<td>每个神经元只连接局部区域，提取局部特征</td>
+</tr>
+<tr>
+<td><strong>平移不变性</strong></td>
+<td>池化操作使网络对位置变化具有一定鲁棒性</td>
+</tr>
+<tr>
+<td><strong>层次化特征</strong></td>
+<td>浅层提取边缘纹理，深层提取语义特征</td>
+</tr>
+<tr>
+<td><strong>端到端学习</strong></td>
+<td>自动学习特征，无需手工设计</td>
+</tr>
+</tbody>
+</table>
+<h3 id="缺点">缺点</h3>
+<table>
+<thead>
+<tr>
+<th>缺点</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>需要大量数据</strong></td>
+<td>深层网络需要大量标注数据训练</td>
+</tr>
+<tr>
+<td><strong>计算资源需求高</strong></td>
+<td>训练需要 GPU 加速</td>
+</tr>
+<tr>
+<td><strong>可解释性较弱</strong></td>
+<td>深层特征难以直观理解</td>
+</tr>
+<tr>
+<td><strong>对旋转缩放敏感</strong></td>
+<td>需要数据增强来提高鲁棒性</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="八、应用场景">八、应用场景</h2>
+<p>CNN 在计算机视觉领域无处不在：</p>
+<ul>
+<li><strong>图像分类</strong>：识别图像中的物体类别（ImageNet）</li>
+<li><strong>目标检测</strong>：定位并识别图像中的多个物体（YOLO、Faster R-CNN）</li>
+<li><strong>语义分割</strong>：像素级分类，识别每个像素的类别（U-Net、DeepLab）</li>
+<li><strong>人脸识别</strong>：FaceID、人脸验证系统</li>
+<li><strong>医学影像</strong>：肿瘤检测、病变分割</li>
+<li><strong>自动驾驶</strong>：车道检测、行人识别</li>
+</ul>
+<hr>
+<h2 id="九、总结">九、总结</h2>
+<p>卷积神经网络是深度学习在计算机视觉领域取得突破的关键：</p>
+<blockquote>
+<p><strong>核心思想</strong>：通过卷积操作提取局部特征，通过池化降低维度，通过堆叠层数学习层次化表示。</p>
+</blockquote>
+<p>关键点回顾：</p>
+<table>
+<thead>
+<tr>
+<th>要点</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>卷积层</td>
+<td>提取局部特征，参数共享</td>
+</tr>
+<tr>
+<td>池化层</td>
+<td>降维，增强平移不变性</td>
+</tr>
+<tr>
+<td>激活函数</td>
+<td>引入非线性（ReLU）</td>
+</tr>
+<tr>
+<td>批归一化</td>
+<td>加速训练，提高稳定性</td>
+</tr>
+<tr>
+<td>残差连接</td>
+<td>解决深层网络训练困难</td>
+</tr>
+</tbody>
+</table>
+<p>从 LeNet 到 ResNet，CNN 架构不断演进，但其核心思想——<strong>局部感受野、权值共享、层次化特征提取</strong>——始终未变。掌握 CNN，你就掌握了计算机视觉的基石。</p>
+<hr>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://paywqiao-max.github.io/2026/04/03/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%EF%BC%89%EF%BC%9A%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9CCNN/" data-id="cuidllh_ScMChAa9atuYYklnF" data-title="机器学习基础（十）：卷积神经网络CNN" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/CNN/" rel="tag">CNN</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" rel="tag">卷积神经网络</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%9B%BE%E5%83%8F%E5%88%86%E7%B1%BB/" rel="tag">图像分类</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" rel="tag">深度学习</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/" rel="tag">计算机视觉</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-机器学习基础（九）：PyTorch入门" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
     <a href="/2026/04/02/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B9%9D%EF%BC%89%EF%BC%9APyTorch%E5%85%A5%E9%97%A8/" class="article-date">
@@ -400,7 +868,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/04/02/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B9%9D%EF%BC%89%EF%BC%9APyTorch%E5%85%A5%E9%97%A8/" data-id="cuideoYFxv05N_zD6uVNyQnud" data-title="机器学习基础（九）：PyTorch入门" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/04/02/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B9%9D%EF%BC%89%EF%BC%9APyTorch%E5%85%A5%E9%97%A8/" data-id="cuidMjETWiqbIv97qQVoqZooD" data-title="机器学习基础（九）：PyTorch入门" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -664,7 +1132,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/04/01/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%85%AB%EF%BC%89%EF%BC%9A%E9%80%BB%E8%BE%91%E5%9B%9E%E5%BD%92/" data-id="cuid-wGSPg0sA10TRURlHvuyp" data-title="机器学习基础（八）：逻辑回归" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/04/01/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%85%AB%EF%BC%89%EF%BC%9A%E9%80%BB%E8%BE%91%E5%9B%9E%E5%BD%92/" data-id="cuidsB71twa6TIuEr7-nvEl-y" data-title="机器学习基础（八）：逻辑回归" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -917,7 +1385,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/03/31/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%83%EF%BC%89%EF%BC%9A%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0/" data-id="cuid9zSgfLUqIsKJM4ruomzUZ" data-title="机器学习基础（七）：激活函数" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/03/31/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%83%EF%BC%89%EF%BC%9A%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0/" data-id="cuidFacnncC4Y_qbkZoMLrzCN" data-title="机器学习基础（七）：激活函数" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -1093,7 +1561,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/03/30/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%85%AD%EF%BC%89%EF%BC%9A%E4%BB%8E0%E7%90%86%E8%A7%A3%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92%E2%80%94%E2%80%94%E4%BB%8E%E5%85%AC%E5%BC%8F%E5%88%B0%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/" data-id="cuidvKdW1DR5meqs7X8WbCKyo" data-title="机器学习基础（六）：从0理解线性回归——从公式到代码实现" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/03/30/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%85%AD%EF%BC%89%EF%BC%9A%E4%BB%8E0%E7%90%86%E8%A7%A3%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92%E2%80%94%E2%80%94%E4%BB%8E%E5%85%AC%E5%BC%8F%E5%88%B0%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/" data-id="cuid0X9lQXx0De_Iop3LuLNFF" data-title="机器学习基础（六）：从0理解线性回归——从公式到代码实现" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -1271,7 +1739,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/03/28/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%BA%94%EF%BC%89%E4%BB%8E0%E7%90%86%E8%A7%A3%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD%EF%BC%9A%E6%A2%AF%E5%BA%A6%E5%88%B0%E5%BA%95%E6%98%AF%E6%80%8E%E4%B9%88%E6%9D%A5%E7%9A%84%EF%BC%9F/" data-id="cuidckEfknBKihWheMRfWWXrI" data-title="机器学习基础（五）从0理解反向传播：梯度到底是怎么来的？" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/03/28/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%BA%94%EF%BC%89%E4%BB%8E0%E7%90%86%E8%A7%A3%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD%EF%BC%9A%E6%A2%AF%E5%BA%A6%E5%88%B0%E5%BA%95%E6%98%AF%E6%80%8E%E4%B9%88%E6%9D%A5%E7%9A%84%EF%BC%9F/" data-id="cuidCK7EanmBnXSA7pmeXPxK2" data-title="机器学习基础（五）从0理解反向传播：梯度到底是怎么来的？" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -1407,7 +1875,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9A%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0%E4%B8%8E%E4%BC%98%E5%8C%96%E7%9B%AE%E6%A0%87/" data-id="cuidqJMLc6EasSRlwjds0fkAL" data-title="机器学习基础（四）：损失函数与优化目标" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9A%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0%E4%B8%8E%E4%BC%98%E5%8C%96%E7%9B%AE%E6%A0%87/" data-id="cuidCxfRQQ8F9_fbrd6XRSa1K" data-title="机器学习基础（四）：损失函数与优化目标" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -1617,7 +2085,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9A%E4%BB%8E%E6%AC%A7%E5%BC%8F%E8%B7%9D%E7%A6%BB%E5%88%B0%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" data-id="cuideKcfP3AesuiMBChdH-NGN" data-title="机器学习基础（三）：从欧式距离到梯度下降" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9A%E4%BB%8E%E6%AC%A7%E5%BC%8F%E8%B7%9D%E7%A6%BB%E5%88%B0%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" data-id="cuid-wNWOvbyGA5VTp0_jntRY" data-title="机器学习基础（三）：从欧式距离到梯度下降" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -1988,7 +2456,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/03/25/DAY2-%E7%9F%A9%E9%98%B5%E5%9F%BA%E7%A1%80%E4%B8%8E%E5%87%A0%E4%BD%95%E6%84%8F%E4%B9%89/" data-id="cuidoCb2Ubg70pTiyHqbzYiIn" data-title="机器学习基础（二）：向量空间与线性代数入门" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/03/25/DAY2-%E7%9F%A9%E9%98%B5%E5%9F%BA%E7%A1%80%E4%B8%8E%E5%87%A0%E4%BD%95%E6%84%8F%E4%B9%89/" data-id="cuidumOP-y409s3iMS8D0gft7" data-title="机器学习基础（二）：向量空间与线性代数入门" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -2101,7 +2569,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/03/24/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8/" data-id="cuidOimYFZAGi0oL2Ri1MrkSp" data-title="机器学习基础（一）：从向量到矩阵变换" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/03/24/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8/" data-id="cuidnpyiPHDz0H-Q-C1gL0tZi" data-title="机器学习基础（一）：从向量到矩阵变换" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -2135,7 +2603,7 @@ $$</p>
   <div class="widget-wrap">
     <h3 class="widget-title">标签</h3>
     <div class="widget">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0-%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C-%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0-ReLU/" rel="tag">-机器学习 -深度学习 -神经网络 -激活函数 -ReLU</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GPU%E5%8A%A0%E9%80%9F/" rel="tag">GPU加速</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NumPy/" rel="tag">NumPy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/PyTorch/" rel="tag">PyTorch</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Python/" rel="tag">Python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Sigmoid/" rel="tag">Sigmoid</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/scikit-learn/" rel="tag">scikit-learn</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BA%A4%E5%8F%89%E7%86%B5/" rel="tag">交叉熵</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%8E0%E5%BC%80%E5%A7%8B/" rel="tag">从0开始</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" rel="tag">优化方法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%86%E7%B1%BB%E7%AE%97%E6%B3%95/" rel="tag">分类算法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD/" rel="tag">反向传播</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" rel="tag">学习记录</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" rel="tag">数学基础</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" rel="tag">梯度下降</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" rel="tag">深度学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" rel="tag">神经网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" rel="tag">线性代数</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92/" rel="tag">线性回归</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%87%AA%E5%8A%A8%E6%B1%82%E5%AF%BC/" rel="tag">自动求导</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%80%BB%E8%BE%91%E5%9B%9E%E5%BD%92/" rel="tag">逻辑回归</a></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0-%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C-%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0-ReLU/" rel="tag">-机器学习 -深度学习 -神经网络 -激活函数 -ReLU</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CNN/" rel="tag">CNN</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GPU%E5%8A%A0%E9%80%9F/" rel="tag">GPU加速</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NumPy/" rel="tag">NumPy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/PyTorch/" rel="tag">PyTorch</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Python/" rel="tag">Python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Sigmoid/" rel="tag">Sigmoid</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/scikit-learn/" rel="tag">scikit-learn</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BA%A4%E5%8F%89%E7%86%B5/" rel="tag">交叉熵</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%8E0%E5%BC%80%E5%A7%8B/" rel="tag">从0开始</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" rel="tag">优化方法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%86%E7%B1%BB%E7%AE%97%E6%B3%95/" rel="tag">分类算法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" rel="tag">卷积神经网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD/" rel="tag">反向传播</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%9B%BE%E5%83%8F%E5%88%86%E7%B1%BB/" rel="tag">图像分类</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" rel="tag">学习记录</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" rel="tag">数学基础</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" rel="tag">梯度下降</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" rel="tag">深度学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" rel="tag">神经网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" rel="tag">线性代数</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92/" rel="tag">线性回归</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%87%AA%E5%8A%A8%E6%B1%82%E5%AF%BC/" rel="tag">自动求导</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/" rel="tag">计算机视觉</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%80%BB%E8%BE%91%E5%9B%9E%E5%BD%92/" rel="tag">逻辑回归</a></li></ul>
     </div>
   </div>
 
@@ -2145,7 +2613,7 @@ $$</p>
   <div class="widget-wrap">
     <h3 class="widget-title">标签云</h3>
     <div class="widget tagcloud">
-      <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0-%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C-%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0-ReLU/" style="font-size: 10px;">-机器学习 -深度学习 -神经网络 -激活函数 -ReLU</a> <a href="/tags/GPU%E5%8A%A0%E9%80%9F/" style="font-size: 10px;">GPU加速</a> <a href="/tags/NumPy/" style="font-size: 13.33px;">NumPy</a> <a href="/tags/PyTorch/" style="font-size: 10px;">PyTorch</a> <a href="/tags/Python/" style="font-size: 10px;">Python</a> <a href="/tags/Sigmoid/" style="font-size: 10px;">Sigmoid</a> <a href="/tags/scikit-learn/" style="font-size: 10px;">scikit-learn</a> <a href="/tags/%E4%BA%A4%E5%8F%89%E7%86%B5/" style="font-size: 10px;">交叉熵</a> <a href="/tags/%E4%BB%8E0%E5%BC%80%E5%A7%8B/" style="font-size: 10px;">从0开始</a> <a href="/tags/%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" style="font-size: 10px;">优化方法</a> <a href="/tags/%E5%88%86%E7%B1%BB%E7%AE%97%E6%B3%95/" style="font-size: 10px;">分类算法</a> <a href="/tags/%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD/" style="font-size: 10px;">反向传播</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" style="font-size: 16.67px;">学习记录</a> <a href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" style="font-size: 13.33px;">数学基础</a> <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" style="font-size: 20px;">机器学习</a> <a href="/tags/%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" style="font-size: 13.33px;">梯度下降</a> <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" style="font-size: 13.33px;">深度学习</a> <a href="/tags/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">神经网络</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" style="font-size: 16.67px;">线性代数</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92/" style="font-size: 10px;">线性回归</a> <a href="/tags/%E8%87%AA%E5%8A%A8%E6%B1%82%E5%AF%BC/" style="font-size: 10px;">自动求导</a> <a href="/tags/%E9%80%BB%E8%BE%91%E5%9B%9E%E5%BD%92/" style="font-size: 10px;">逻辑回归</a>
+      <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0-%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C-%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0-ReLU/" style="font-size: 10px;">-机器学习 -深度学习 -神经网络 -激活函数 -ReLU</a> <a href="/tags/CNN/" style="font-size: 10px;">CNN</a> <a href="/tags/GPU%E5%8A%A0%E9%80%9F/" style="font-size: 10px;">GPU加速</a> <a href="/tags/NumPy/" style="font-size: 13.33px;">NumPy</a> <a href="/tags/PyTorch/" style="font-size: 10px;">PyTorch</a> <a href="/tags/Python/" style="font-size: 10px;">Python</a> <a href="/tags/Sigmoid/" style="font-size: 10px;">Sigmoid</a> <a href="/tags/scikit-learn/" style="font-size: 10px;">scikit-learn</a> <a href="/tags/%E4%BA%A4%E5%8F%89%E7%86%B5/" style="font-size: 10px;">交叉熵</a> <a href="/tags/%E4%BB%8E0%E5%BC%80%E5%A7%8B/" style="font-size: 10px;">从0开始</a> <a href="/tags/%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" style="font-size: 10px;">优化方法</a> <a href="/tags/%E5%88%86%E7%B1%BB%E7%AE%97%E6%B3%95/" style="font-size: 10px;">分类算法</a> <a href="/tags/%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">卷积神经网络</a> <a href="/tags/%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD/" style="font-size: 10px;">反向传播</a> <a href="/tags/%E5%9B%BE%E5%83%8F%E5%88%86%E7%B1%BB/" style="font-size: 10px;">图像分类</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" style="font-size: 16.67px;">学习记录</a> <a href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" style="font-size: 13.33px;">数学基础</a> <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" style="font-size: 20px;">机器学习</a> <a href="/tags/%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" style="font-size: 13.33px;">梯度下降</a> <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" style="font-size: 16.67px;">深度学习</a> <a href="/tags/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">神经网络</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" style="font-size: 16.67px;">线性代数</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92/" style="font-size: 10px;">线性回归</a> <a href="/tags/%E8%87%AA%E5%8A%A8%E6%B1%82%E5%AF%BC/" style="font-size: 10px;">自动求导</a> <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/" style="font-size: 10px;">计算机视觉</a> <a href="/tags/%E9%80%BB%E8%BE%91%E5%9B%9E%E5%BD%92/" style="font-size: 10px;">逻辑回归</a>
     </div>
   </div>
 
@@ -2167,6 +2635,10 @@ $$</p>
       <ul>
         
           <li>
+            <a href="/2026/04/03/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%EF%BC%89%EF%BC%9A%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9CCNN/">机器学习基础（十）：卷积神经网络CNN</a>
+          </li>
+        
+          <li>
             <a href="/2026/04/02/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B9%9D%EF%BC%89%EF%BC%9APyTorch%E5%85%A5%E9%97%A8/">机器学习基础（九）：PyTorch入门</a>
           </li>
         
@@ -2180,10 +2652,6 @@ $$</p>
         
           <li>
             <a href="/2026/03/30/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%85%AD%EF%BC%89%EF%BC%9A%E4%BB%8E0%E7%90%86%E8%A7%A3%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92%E2%80%94%E2%80%94%E4%BB%8E%E5%85%AC%E5%BC%8F%E5%88%B0%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/">机器学习基础（六）：从0理解线性回归——从公式到代码实现</a>
-          </li>
-        
-          <li>
-            <a href="/2026/03/28/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%BA%94%EF%BC%89%E4%BB%8E0%E7%90%86%E8%A7%A3%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD%EF%BC%9A%E6%A2%AF%E5%BA%A6%E5%88%B0%E5%BA%95%E6%98%AF%E6%80%8E%E4%B9%88%E6%9D%A5%E7%9A%84%EF%BC%9F/">机器学习基础（五）从0理解反向传播：梯度到底是怎么来的？</a>
           </li>
         
       </ul>
