@@ -15,12 +15,12 @@
   <meta charset="utf-8">
   
   
-  <title>标签: 神经网络 | 忤逆的学习笔记</title>
+  <title>忤逆的学习笔记</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <meta name="description" content="机器学习与编程学习记录">
 <meta property="og:type" content="website">
 <meta property="og:title" content="忤逆的学习笔记">
-<meta property="og:url" content="https://paywqiao-max.github.io/tags/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/index.html">
+<meta property="og:url" content="https://paywqiao-max.github.io/page/2/index.html">
 <meta property="og:site_name" content="忤逆的学习笔记">
 <meta property="og:description" content="机器学习与编程学习记录">
 <meta property="og:locale" content="zh_CN">
@@ -88,38 +88,125 @@
       <div class="outer">
         <section id="main">
   
-  
-    
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2026" class="archive-year">2026</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2026/04/02/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B9%9D%EF%BC%89%EF%BC%9APyTorch%E5%85%A5%E9%97%A8/" class="archive-article-date">
-  <time class="dt-published" datetime="2026-04-02T13:20:00.000Z" itemprop="datePublished">4月 2</time>
+    <article id="post-机器学习入门" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/03/24/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8/" class="article-date">
+  <time class="dt-published" datetime="2026-03-24T13:41:02.000Z" itemprop="datePublished">2026-03-24</time>
 </a>
-      
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
   
     <h1 itemprop="name">
-      <a class="archive-article-title" href="/2026/04/02/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B9%9D%EF%BC%89%EF%BC%9APyTorch%E5%85%A5%E9%97%A8/">机器学习基础（九）：PyTorch入门</a>
+      <a class="p-name article-title" href="/2026/03/24/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8/">机器学习基础（一）：从向量到矩阵变换</a>
     </h1>
   
 
-    </header>
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h1>机器学习入门：从向量到矩阵变换</h1>
+<h2 id="一、数据的本质：向量">一、数据的本质：向量</h2>
+<p>在机器学习中，所有数据本质上都可以表示为向量。</p>
+<p>例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">身高 = 180</span><br><span class="line">体重 = 70</span><br><span class="line">年龄 = 20</span><br></pre></td></tr></table></figure>
+<p>可以表示为一个向量：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">x = [180, 70, 20]</span><br></pre></td></tr></table></figure>
+<p>向量的本质是：</p>
+<blockquote>
+<p>按顺序排列的一组数值，用于描述一个对象的特征</p>
+</blockquote>
+<hr>
+<h2 id="二、模型的本质：矩阵">二、模型的本质：矩阵</h2>
+<p>如果说向量表示“数据”，那么矩阵表示“对数据的处理方式”。</p>
+<p>矩阵可以看作是按行或按列组织起来的一组向量，本质是一个二维数组。</p>
+<p>在机器学习中，矩阵通常用于表示模型的参数。</p>
+<hr>
+<h2 id="三、点积：最基础的计算方式">三、点积：最基础的计算方式</h2>
+<p>给定一个权重向量：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">w = [0.5, 0.3, 0.2]</span><br></pre></td></tr></table></figure>
+<p>和输入向量：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">x = [180, 70, 20]</span><br></pre></td></tr></table></figure>
+<p>它们的点积为：</p>
+<p>$$<br>
+y = w \cdot x<br>
+$$</p>
+<p>点积的本质是：</p>
+<blockquote>
+<p>对输入数据进行加权求和</p>
+</blockquote>
+<p>即：</p>
+<ul>
+<li>每个特征乘以对应权重</li>
+<li>然后相加得到结果</li>
+</ul>
+<hr>
+<h2 id="四、模型的形式：从输入到输出">四、模型的形式：从输入到输出</h2>
+<p>在最简单的情况下，一个模型可以表示为：</p>
+<p>$$<br>
+y = W x + b<br>
+$$</p>
+<p>其中：</p>
+<ul>
+<li>x：输入向量（数据）</li>
+<li>W：矩阵（模型参数）</li>
+<li>b：偏置项</li>
+<li>y：输出结果</li>
+</ul>
+<p>这个过程可以理解为：</p>
+<blockquote>
+<p>使用矩阵对输入数据进行一次线性变换</p>
+</blockquote>
+<hr>
+<h2 id="五、机器学习的核心任务">五、机器学习的核心任务</h2>
+<p>机器学习的目标并不是“随便找一个矩阵”，而是：</p>
+<blockquote>
+<p>通过训练数据，找到一个最优的矩阵 W，使得模型输出尽可能接近真实结果</p>
+</blockquote>
+<p>这个过程通常通过优化算法（例如梯度下降）来完成。</p>
+<hr>
+<h2 id="六、总结">六、总结</h2>
+<p>可以用一句话概括机器学习的基本结构：</p>
+<blockquote>
+<p>数据是向量，模型是矩阵，对数据进行变换以得到结果</p>
+</blockquote>
+<p>进一步地：</p>
+<blockquote>
+<p>机器学习的过程，就是不断调整矩阵参数，使变换结果更接近真实值</p>
+</blockquote>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://paywqiao-max.github.io/2026/03/24/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8/" data-id="cuidv4VDx8eChEfzcjj4m_m0C" data-title="机器学习基础（一）：从向量到矩阵变换" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/NumPy/" rel="tag">NumPy</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" rel="tag">学习记录</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" rel="tag">线性代数</a></li></ul>
+
+    </footer>
   </div>
+  
 </article>
-  
-  
-    </div></section>
+
+
+
   
 
+
+  <nav id="page-nav">
+    
+    <a class="extend prev" rel="prev" href="/">&laquo; 上一页</a><a class="page-number" href="/">1</a><span class="page-number current">2</span>
+  </nav>
 
 </section>
         
