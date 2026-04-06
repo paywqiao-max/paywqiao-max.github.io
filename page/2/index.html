@@ -88,6 +88,377 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-DAY2-矩阵基础与几何意义" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/03/25/DAY2-%E7%9F%A9%E9%98%B5%E5%9F%BA%E7%A1%80%E4%B8%8E%E5%87%A0%E4%BD%95%E6%84%8F%E4%B9%89/" class="article-date">
+  <time class="dt-published" datetime="2026-03-25T14:52:23.000Z" itemprop="datePublished">2026-03-25</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2026/03/25/DAY2-%E7%9F%A9%E9%98%B5%E5%9F%BA%E7%A1%80%E4%B8%8E%E5%87%A0%E4%BD%95%E6%84%8F%E4%B9%89/">机器学习基础（二）：向量空间与线性代数入门</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="一、今日学习目标">一、今日学习目标</h2>
+<h3 id="1、掌握矩阵核心算法：加法，数乘，矩阵乘法，转置">1、掌握矩阵核心算法：加法，数乘，矩阵乘法，转置</h3>
+<h3 id="2、理解矩阵乘法的几何意义">2、理解矩阵乘法的几何意义</h3>
+<h3 id="3、-用NumPy实现所有的基础矩阵运算">3、 用NumPy实现所有的基础矩阵运算</h3>
+<hr>
+<h2 id="二、矩阵的核心算法">二、矩阵的核心算法</h2>
+<h3 id="1、矩阵加法">1、矩阵加法</h3>
+<h4 id="本质：">本质：</h4>
+<blockquote>
+<p><strong>矩阵的对应位置相加</strong></p>
+</blockquote>
+<h4 id="条件：">条件：</h4>
+<blockquote>
+<p><strong>矩阵的行列数必须完全相同</strong></p>
+</blockquote>
+<h4 id="公式：">公式：</h4>
+<p>若：A = (a<sub>i,j</sub>)，B=(b<sub>i,j</sub>)<br>
+则：C = A + B = (a<sub>i,j</sub> + b<sub>i,j</sub>)</p>
+<h4 id="例如：">例如：</h4>
+<p>$$<br>
+A=<br>
+\begin{bmatrix}<br>
+1 &amp; 2 \\<br>
+3 &amp; 4<br>
+\end{bmatrix}<br>
+,<br>
+\quad<br>
+B =<br>
+\begin{bmatrix}<br>
+5 &amp; 6 \\<br>
+7 &amp; 8<br>
+\end{bmatrix}<br>
+$$</p>
+<h4 id="那么：">那么：</h4>
+<p>$$<br>
+A + B =<br>
+\begin{bmatrix}<br>
+6 &amp; 8 \\<br>
+10 &amp; 12<br>
+\end{bmatrix}<br>
+$$</p>
+<hr>
+<h3 id="2、矩阵数乘">2、矩阵数乘</h3>
+<h4 id="本质：-2">本质：</h4>
+<blockquote>
+<p><strong>对矩阵整体进行放缩</strong></p>
+</blockquote>
+<h4 id="规则：">规则：</h4>
+<blockquote>
+<p><strong>矩阵内的每个数都与这个数相乘</strong></p>
+</blockquote>
+<h4 id="例如：-2">例如：</h4>
+<p>$$<br>
+2A=<br>
+\begin{bmatrix}<br>
+2 &amp; 4 \\<br>
+6 &amp; 8<br>
+\end{bmatrix}<br>
+$$</p>
+<hr>
+<h3 id="3、矩阵乘法">3、矩阵乘法</h3>
+<h4 id="本质：-3">本质：</h4>
+<blockquote>
+<p><strong>矩阵行与列的点积</strong></p>
+</blockquote>
+<h4 id="条件：-2">条件：</h4>
+<blockquote>
+<p><strong>A 是 m×n</strong><br>
+<strong>B 是 n×p</strong><br>
+<strong>中间维度必须相同！！！！</strong></p>
+</blockquote>
+<h4 id="规则：-2">规则：</h4>
+<blockquote>
+<p><strong>第i行 × 第j列</strong></p>
+</blockquote>
+<h4 id="公式：-2">公式：</h4>
+<blockquote>
+<p>$$<br>
+C_{ij} = \sum_{k=1}^{n} A_{ik} B_{kj}<br>
+$$</p>
+</blockquote>
+<h4 id="例如：-3">例如：</h4>
+<p>$$<br>
+AB=<br>
+\begin{bmatrix}<br>
+1 × 5 + 2 × 7 = 19 &amp; 1 × 6 + 2 × 8 = 22\\<br>
+3 × 5 + 4 × 7 = 43 &amp; 3 × 6 + 4 × 8 = 50<br>
+\end{bmatrix}<br>
+$$</p>
+<h4 id="重要性质：">重要性质：</h4>
+<ul>
+<li>不满足交换律！！！<br>
+$$<br>
+\Large AB ≠ BA<br>
+$$</li>
+</ul>
+<hr>
+<h3 id="4、转置">4、转置</h3>
+<h4 id="本质：-4">本质：</h4>
+<blockquote>
+<p>行列互换</p>
+</blockquote>
+<h4 id="定义：">定义：</h4>
+<blockquote>
+<p>$$<br>
+A^T<br>
+$$</p>
+</blockquote>
+<h4 id="例如：-4">例如：</h4>
+<p>$$<br>
+A=<br>
+\begin{bmatrix}<br>
+1 &amp; 2 &amp; 3\\<br>
+4 &amp; 5 &amp; 6<br>
+\end{bmatrix}<br>
+$$</p>
+<p>$$<br>
+A^T=<br>
+\begin{bmatrix}<br>
+1 &amp; 4 \\<br>
+2 &amp; 5 \\<br>
+3 &amp; 6<br>
+\end{bmatrix}<br>
+$$</p>
+<h3 id="补充-单位矩阵">补充:单位矩阵</h3>
+<h4 id="记作：">记作：</h4>
+<p>$$<br>
+I=<br>
+\begin{bmatrix}<br>
+1 &amp; 0 \\<br>
+0 &amp; 1<br>
+\end{bmatrix}<br>
+$$</p>
+<h4 id="性质：">性质：</h4>
+<p>$$<br>
+AI = IA = A<br>
+$$</p>
+<hr>
+<h2 id="三、矩阵乘法的几何意义">三、矩阵乘法的几何意义</h2>
+<h3 id="1、核心结论">1、核心结论</h3>
+<blockquote>
+<p><strong>矩阵本质上表示一种“线性变换”</strong><br>
+<strong>矩阵乘法 = 线性变换的复合（叠加）</strong></p>
+</blockquote>
+<hr>
+<h3 id="2、矩阵如何作用在向量上">2、矩阵如何作用在向量上</h3>
+<p>设一个二维向量：</p>
+<p>$$<br>
+\begin{bmatrix}<br>
+x \\<br>
+y<br>
+\end{bmatrix}<br>
+$$</p>
+<p>一个矩阵：</p>
+<p>$$<br>
+A =<br>
+\begin{bmatrix}<br>
+a &amp; b \\<br>
+c &amp; d<br>
+\end{bmatrix}<br>
+$$</p>
+<p>作用结果为：</p>
+<p>$$<br>
+A \begin{bmatrix} x \ y \end{bmatrix}<br>
+$$</p>
+<hr>
+<h3 id="3、列向量视角">3、列向量视角</h3>
+<p>将矩阵拆成两列：</p>
+<p>$$<br>
+\vec{v}_1 = \begin{bmatrix} a \ c \end{bmatrix}, \quad<br>
+\vec{v}_2 = \begin{bmatrix} b \ d \end{bmatrix}<br>
+$$</p>
+<p>那么有：</p>
+<p>$$<br>
+A \begin{bmatrix} x \ y \end{bmatrix}<br>
+= x \vec{v}_1 + y \vec{v}_2<br>
+$$</p>
+<p>这意味着：</p>
+<ul>
+<li>原来的坐标 $(x, y)$</li>
+<li>被映射为：
+<ul>
+<li>$x$ 倍的第一列向量</li>
+<li>加上 $y$ 倍的第二列向量</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="4、几何直观理解">4、几何直观理解</h3>
+<h4 id="1-矩阵在“改变坐标系”">1. 矩阵在“改变坐标系”</h4>
+<p>矩阵的两列：</p>
+<ul>
+<li>第一列：原本的 <strong>x轴</strong> 变成哪里</li>
+<li>第二列：原本的 <strong>y轴</strong> 变成哪里</li>
+</ul>
+<p>本质：<strong>坐标轴被重新定义了</strong></p>
+<hr>
+<h4 id="2-常见几何变换">2. 常见几何变换</h4>
+<h5 id="（1）拉伸-压缩">（1）拉伸 / 压缩</h5>
+<p>$$<br>
+\begin{bmatrix}<br>
+2 &amp; 0 \\<br>
+0 &amp; 1<br>
+\end{bmatrix}<br>
+$$</p>
+<p>x方向放大 2 倍</p>
+<hr>
+<h5 id="（2）旋转">（2）旋转</h5>
+<p>$$<br>
+\begin{bmatrix}<br>
+\cos\theta &amp; -\sin\theta \\<br>
+\sin\theta &amp; \cos\theta<br>
+\end{bmatrix}<br>
+$$</p>
+<p>整个空间旋转 $\theta$</p>
+<hr>
+<h4 id="（3）剪切（Shear）">（3）剪切（Shear）</h4>
+<p>$$<br>
+\begin{bmatrix}<br>
+1 &amp; 1 \\<br>
+0 &amp; 1<br>
+\end{bmatrix}<br>
+$$</p>
+<p>图形被“斜着拉”</p>
+<hr>
+<h3 id="5、矩阵乘法的几何意义（重点）">5、矩阵乘法的几何意义（重点）</h3>
+<p>设两个矩阵：</p>
+<p>$$<br>
+AB<br>
+$$</p>
+<p>它作用在向量上：</p>
+<p>$$<br>
+AB\vec{x} = A(B\vec{x})<br>
+$$</p>
+<p>含义：</p>
+<ol>
+<li>先进行 <strong>B 变换</strong></li>
+<li>再进行 <strong>A 变换</strong></li>
+</ol>
+<hr>
+<h3 id="6、直观理解：变换的叠加">6、直观理解：变换的叠加</h3>
+<p>想象一个单位正方形：</p>
+<ol>
+<li>先用矩阵 $B$ 进行变形</li>
+<li>再用矩阵 $A$ 再变形一次</li>
+</ol>
+<p>最终效果就是矩阵乘积 $AB$</p>
+<hr>
+<h3 id="7、为什么矩阵乘法不满足交换律？">7、为什么矩阵乘法不满足交换律？</h3>
+<p>$$<br>
+AB \ne BA<br>
+$$</p>
+<p>原因：</p>
+<ul>
+<li>先旋转再拉伸 ≠ 先拉伸再旋转</li>
+<li>变换顺序不同，结果不同</li>
+</ul>
+<p>本质：<strong>变换是有顺序的</strong></p>
+<hr>
+<h3 id="8、更高阶理解：基底变换">8、更高阶理解：基底变换</h3>
+<p>矩阵乘法还可以理解为：</p>
+<ul>
+<li>第一个矩阵：改变坐标系</li>
+<li>第二个矩阵：在新坐标系下继续变换</li>
+</ul>
+<p>本质是：<strong>基底（basis）的连续变化</strong></p>
+<hr>
+<h3 id="9、在计算机-深度学习中的意义">9、在计算机 / 深度学习中的意义</h3>
+<p>在线性模型中：</p>
+<p>$$<br>
+y = Wx<br>
+$$</p>
+<p>矩阵 $W$ 的作用：</p>
+<ul>
+<li>特征组合</li>
+<li>信息压缩 / 扩展</li>
+<li>空间投影</li>
+</ul>
+<p>本质仍然是：<strong>线性变换</strong></p>
+<hr>
+<h3 id="10、一句话总结">10、一句话总结</h3>
+<blockquote>
+<p><strong>矩阵乘法 = 线性变换的复合</strong></p>
+</blockquote>
+<hr>
+<h2 id="四、用NumPy实现所有的基础矩阵运算">四、用NumPy实现所有的基础矩阵运算</h2>
+<p>NumPy 是 Python 中进行数值计算的核心库，矩阵运算非常高效且简洁。</p>
+<hr>
+<h3 id="1、安装与导入">1、安装与导入</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install numpy</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="2、创建矩阵">2、创建矩阵</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">A = np.array([[<span class="number">1</span>, <span class="number">2</span>],</span><br><span class="line">              [<span class="number">3</span>, <span class="number">4</span>]])</span><br><span class="line"></span><br><span class="line">B = np.array([[<span class="number">5</span>, <span class="number">6</span>],</span><br><span class="line">              [<span class="number">7</span>, <span class="number">8</span>]])</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="3、矩阵加法">3、矩阵加法</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">C = A + B</span><br><span class="line"><span class="built_in">print</span>(C)</span><br></pre></td></tr></table></figure>
+<p>输出</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[[ 6  8]</span><br><span class="line"> [10 12]]</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="4、数乘">4、数乘</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">C = <span class="number">2</span> * A</span><br><span class="line"><span class="built_in">print</span>(C)</span><br></pre></td></tr></table></figure>
+<p>输出</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[[2 4]</span><br><span class="line"> [6 8]]</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="5、矩阵乘法">5、矩阵乘法</h3>
+<h4 id="方法1：使用">方法1：使用 @</h4>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">C = A @ B</span><br><span class="line"><span class="built_in">print</span>(C)</span><br></pre></td></tr></table></figure>
+<h4 id="方法2：使用-np-dot">方法2：使用 np.dot</h4>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">C = np.dot(A, B)</span><br><span class="line"><span class="built_in">print</span>(C)</span><br></pre></td></tr></table></figure>
+<p>输出：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[[19 22]</span><br><span class="line"> [43 50]]</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="6、转置矩阵">6、转置矩阵</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">A_T = A.T</span><br><span class="line"><span class="built_in">print</span>(A_T)</span><br></pre></td></tr></table></figure>
+<p>输出：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[[1 3]</span><br><span class="line"> [2 4]]</span><br></pre></td></tr></table></figure>
+<hr>
+<h1>总结</h1>
+<p>关于矩阵的运算是机器学习的前置知识中非常重要的一个点，在理解矩阵是如何运算的同时，我们要明白其在处理数据当中的应用，我将其归纳如下：</p>
+<ul>
+<li>加法 = 数据叠加</li>
+<li>数乘 = 权重缩放</li>
+<li>乘法 = 信息融合 / 线性变换</li>
+<li>转置 = 改变数据视角<br>
+在理解了这些后，我们才能够更深一步的了解神经网络相关的内容</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://paywqiao-max.github.io/2026/03/25/DAY2-%E7%9F%A9%E9%98%B5%E5%9F%BA%E7%A1%80%E4%B8%8E%E5%87%A0%E4%BD%95%E6%84%8F%E4%B9%89/" data-id="cuidre3WBlJCt4Qa9u2CIL_yj" data-title="机器学习基础（二）：向量空间与线性代数入门" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/NumPy/" rel="tag">NumPy</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" rel="tag">学习记录</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" rel="tag">线性代数</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-机器学习入门" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
     <a href="/2026/03/24/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8/" class="article-date">
@@ -187,7 +558,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/03/24/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8/" data-id="cuidv4VDx8eChEfzcjj4m_m0C" data-title="机器学习基础（一）：从向量到矩阵变换" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/03/24/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8/" data-id="cuidtStAe41ZxHufhyy0N7sjM" data-title="机器学习基础（一）：从向量到矩阵变换" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -226,7 +597,7 @@ $$</p>
   <div class="widget-wrap">
     <h3 class="widget-title">标签</h3>
     <div class="widget">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0-%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C-%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0-ReLU/" rel="tag">-机器学习 -深度学习 -神经网络 -激活函数 -ReLU</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/BatchNorm/" rel="tag">BatchNorm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CNN/" rel="tag">CNN</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Dropout/" rel="tag">Dropout</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GPU%E5%8A%A0%E9%80%9F/" rel="tag">GPU加速</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NumPy/" rel="tag">NumPy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/PyTorch/" rel="tag">PyTorch</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Python/" rel="tag">Python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Sigmoid/" rel="tag">Sigmoid</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/scikit-learn/" rel="tag">scikit-learn</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BA%A4%E5%8F%89%E7%86%B5/" rel="tag">交叉熵</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%8E0%E5%BC%80%E5%A7%8B/" rel="tag">从0开始</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" rel="tag">优化方法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%86%E7%B1%BB%E7%AE%97%E6%B3%95/" rel="tag">分类算法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" rel="tag">卷积神经网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD/" rel="tag">反向传播</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%9B%BE%E5%83%8F%E5%88%86%E7%B1%BB/" rel="tag">图像分类</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" rel="tag">学习记录</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" rel="tag">数学基础</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" rel="tag">梯度下降</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%AD%A3%E5%88%99%E5%8C%96/" rel="tag">正则化</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" rel="tag">深度学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%82%BC%E4%B8%B9%E6%8A%80%E5%B7%A7/" rel="tag">炼丹技巧</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" rel="tag">神经网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" rel="tag">线性代数</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92/" rel="tag">线性回归</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%87%AA%E5%8A%A8%E6%B1%82%E5%AF%BC/" rel="tag">自动求导</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/" rel="tag">计算机视觉</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%BF%87%E6%8B%9F%E5%90%88/" rel="tag">过拟合</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%80%BB%E8%BE%91%E5%9B%9E%E5%BD%92/" rel="tag">逻辑回归</a></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0-%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C-%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0-ReLU/" rel="tag">-机器学习 -深度学习 -神经网络 -激活函数 -ReLU</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Adam/" rel="tag">Adam</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AdamW/" rel="tag">AdamW</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/BatchNorm/" rel="tag">BatchNorm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CNN/" rel="tag">CNN</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Dropout/" rel="tag">Dropout</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GPU%E5%8A%A0%E9%80%9F/" rel="tag">GPU加速</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NumPy/" rel="tag">NumPy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/PyTorch/" rel="tag">PyTorch</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Python/" rel="tag">Python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SGD/" rel="tag">SGD</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Sigmoid/" rel="tag">Sigmoid</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/scikit-learn/" rel="tag">scikit-learn</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BA%A4%E5%8F%89%E7%86%B5/" rel="tag">交叉熵</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%8E0%E5%BC%80%E5%A7%8B/" rel="tag">从0开始</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BC%98%E5%8C%96%E5%99%A8/" rel="tag">优化器</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" rel="tag">优化方法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%86%E7%B1%BB%E7%AE%97%E6%B3%95/" rel="tag">分类算法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" rel="tag">卷积神经网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD/" rel="tag">反向传播</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%9B%BE%E5%83%8F%E5%88%86%E7%B1%BB/" rel="tag">图像分类</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" rel="tag">学习记录</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" rel="tag">数学基础</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" rel="tag">梯度下降</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%AD%A3%E5%88%99%E5%8C%96/" rel="tag">正则化</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" rel="tag">深度学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%82%BC%E4%B8%B9%E6%8A%80%E5%B7%A7/" rel="tag">炼丹技巧</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" rel="tag">神经网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" rel="tag">线性代数</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92/" rel="tag">线性回归</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%87%AA%E5%8A%A8%E6%B1%82%E5%AF%BC/" rel="tag">自动求导</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/" rel="tag">计算机视觉</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%BF%87%E6%8B%9F%E5%90%88/" rel="tag">过拟合</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%80%BB%E8%BE%91%E5%9B%9E%E5%BD%92/" rel="tag">逻辑回归</a></li></ul>
     </div>
   </div>
 
@@ -236,7 +607,7 @@ $$</p>
   <div class="widget-wrap">
     <h3 class="widget-title">标签云</h3>
     <div class="widget tagcloud">
-      <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0-%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C-%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0-ReLU/" style="font-size: 10px;">-机器学习 -深度学习 -神经网络 -激活函数 -ReLU</a> <a href="/tags/BatchNorm/" style="font-size: 10px;">BatchNorm</a> <a href="/tags/CNN/" style="font-size: 10px;">CNN</a> <a href="/tags/Dropout/" style="font-size: 10px;">Dropout</a> <a href="/tags/GPU%E5%8A%A0%E9%80%9F/" style="font-size: 10px;">GPU加速</a> <a href="/tags/NumPy/" style="font-size: 12.5px;">NumPy</a> <a href="/tags/PyTorch/" style="font-size: 10px;">PyTorch</a> <a href="/tags/Python/" style="font-size: 10px;">Python</a> <a href="/tags/Sigmoid/" style="font-size: 10px;">Sigmoid</a> <a href="/tags/scikit-learn/" style="font-size: 10px;">scikit-learn</a> <a href="/tags/%E4%BA%A4%E5%8F%89%E7%86%B5/" style="font-size: 10px;">交叉熵</a> <a href="/tags/%E4%BB%8E0%E5%BC%80%E5%A7%8B/" style="font-size: 10px;">从0开始</a> <a href="/tags/%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" style="font-size: 10px;">优化方法</a> <a href="/tags/%E5%88%86%E7%B1%BB%E7%AE%97%E6%B3%95/" style="font-size: 10px;">分类算法</a> <a href="/tags/%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">卷积神经网络</a> <a href="/tags/%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD/" style="font-size: 10px;">反向传播</a> <a href="/tags/%E5%9B%BE%E5%83%8F%E5%88%86%E7%B1%BB/" style="font-size: 10px;">图像分类</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" style="font-size: 15px;">学习记录</a> <a href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" style="font-size: 12.5px;">数学基础</a> <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" style="font-size: 20px;">机器学习</a> <a href="/tags/%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" style="font-size: 12.5px;">梯度下降</a> <a href="/tags/%E6%AD%A3%E5%88%99%E5%8C%96/" style="font-size: 10px;">正则化</a> <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" style="font-size: 17.5px;">深度学习</a> <a href="/tags/%E7%82%BC%E4%B8%B9%E6%8A%80%E5%B7%A7/" style="font-size: 10px;">炼丹技巧</a> <a href="/tags/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">神经网络</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" style="font-size: 15px;">线性代数</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92/" style="font-size: 10px;">线性回归</a> <a href="/tags/%E8%87%AA%E5%8A%A8%E6%B1%82%E5%AF%BC/" style="font-size: 10px;">自动求导</a> <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/" style="font-size: 10px;">计算机视觉</a> <a href="/tags/%E8%BF%87%E6%8B%9F%E5%90%88/" style="font-size: 10px;">过拟合</a> <a href="/tags/%E9%80%BB%E8%BE%91%E5%9B%9E%E5%BD%92/" style="font-size: 10px;">逻辑回归</a>
+      <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0-%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C-%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0-ReLU/" style="font-size: 10px;">-机器学习 -深度学习 -神经网络 -激活函数 -ReLU</a> <a href="/tags/Adam/" style="font-size: 10px;">Adam</a> <a href="/tags/AdamW/" style="font-size: 10px;">AdamW</a> <a href="/tags/BatchNorm/" style="font-size: 10px;">BatchNorm</a> <a href="/tags/CNN/" style="font-size: 10px;">CNN</a> <a href="/tags/Dropout/" style="font-size: 10px;">Dropout</a> <a href="/tags/GPU%E5%8A%A0%E9%80%9F/" style="font-size: 10px;">GPU加速</a> <a href="/tags/NumPy/" style="font-size: 12.5px;">NumPy</a> <a href="/tags/PyTorch/" style="font-size: 10px;">PyTorch</a> <a href="/tags/Python/" style="font-size: 10px;">Python</a> <a href="/tags/SGD/" style="font-size: 10px;">SGD</a> <a href="/tags/Sigmoid/" style="font-size: 10px;">Sigmoid</a> <a href="/tags/scikit-learn/" style="font-size: 10px;">scikit-learn</a> <a href="/tags/%E4%BA%A4%E5%8F%89%E7%86%B5/" style="font-size: 10px;">交叉熵</a> <a href="/tags/%E4%BB%8E0%E5%BC%80%E5%A7%8B/" style="font-size: 10px;">从0开始</a> <a href="/tags/%E4%BC%98%E5%8C%96%E5%99%A8/" style="font-size: 10px;">优化器</a> <a href="/tags/%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" style="font-size: 10px;">优化方法</a> <a href="/tags/%E5%88%86%E7%B1%BB%E7%AE%97%E6%B3%95/" style="font-size: 10px;">分类算法</a> <a href="/tags/%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">卷积神经网络</a> <a href="/tags/%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD/" style="font-size: 10px;">反向传播</a> <a href="/tags/%E5%9B%BE%E5%83%8F%E5%88%86%E7%B1%BB/" style="font-size: 10px;">图像分类</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" style="font-size: 15px;">学习记录</a> <a href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" style="font-size: 12.5px;">数学基础</a> <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" style="font-size: 20px;">机器学习</a> <a href="/tags/%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" style="font-size: 12.5px;">梯度下降</a> <a href="/tags/%E6%AD%A3%E5%88%99%E5%8C%96/" style="font-size: 10px;">正则化</a> <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" style="font-size: 17.5px;">深度学习</a> <a href="/tags/%E7%82%BC%E4%B8%B9%E6%8A%80%E5%B7%A7/" style="font-size: 12.5px;">炼丹技巧</a> <a href="/tags/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">神经网络</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" style="font-size: 15px;">线性代数</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92/" style="font-size: 10px;">线性回归</a> <a href="/tags/%E8%87%AA%E5%8A%A8%E6%B1%82%E5%AF%BC/" style="font-size: 10px;">自动求导</a> <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/" style="font-size: 10px;">计算机视觉</a> <a href="/tags/%E8%BF%87%E6%8B%9F%E5%90%88/" style="font-size: 10px;">过拟合</a> <a href="/tags/%E9%80%BB%E8%BE%91%E5%9B%9E%E5%BD%92/" style="font-size: 10px;">逻辑回归</a>
     </div>
   </div>
 
@@ -258,6 +629,10 @@ $$</p>
       <ul>
         
           <li>
+            <a href="/2026/04/06/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%BA%8C%EF%BC%89%EF%BC%9A%E4%BC%98%E5%8C%96%E5%99%A8%E5%A4%A7%E5%85%A8/">机器学习基础（十二）：优化器大全</a>
+          </li>
+        
+          <li>
             <a href="/2026/04/04/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89%EF%BC%9A%E8%BF%87%E6%8B%9F%E5%90%88%E4%B8%8E%E6%AD%A3%E5%88%99%E5%8C%96/">机器学习基础（十一）：过拟合与正则化</a>
           </li>
         
@@ -271,10 +646,6 @@ $$</p>
         
           <li>
             <a href="/2026/04/01/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%85%AB%EF%BC%89%EF%BC%9A%E9%80%BB%E8%BE%91%E5%9B%9E%E5%BD%92/">机器学习基础（八）：逻辑回归</a>
-          </li>
-        
-          <li>
-            <a href="/2026/03/31/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%83%EF%BC%89%EF%BC%9A%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0/">机器学习基础（七）：激活函数</a>
           </li>
         
       </ul>
