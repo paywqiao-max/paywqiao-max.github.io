@@ -88,6 +88,354 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-机器学习基础（十三）：循环神经网络RNN与LSTM" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/04/07/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%B8%89%EF%BC%89%EF%BC%9A%E5%BE%AA%E7%8E%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9CRNN%E4%B8%8ELSTM/" class="article-date">
+  <time class="dt-published" datetime="2026-04-07T13:00:00.000Z" itemprop="datePublished">2026-04-07</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80/">机器学习基础</a>►<a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2026/04/07/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%B8%89%EF%BC%89%EF%BC%9A%E5%BE%AA%E7%8E%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9CRNN%E4%B8%8ELSTM/">机器学习基础（十三）：循环神经网络RNN与LSTM</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="一、引言">一、引言</h2>
+<p>前面我们学习的 CNN 擅长处理<strong>空间数据</strong>（图像），但现实世界还有大量<strong>序列数据</strong>：</p>
+<ul>
+<li>一句话里的词是有顺序的；</li>
+<li>股票价格随时间变化；</li>
+<li>音乐是一段连续的音符序列；</li>
+<li>传感器数据是时间序列。</li>
+</ul>
+<p>这些数据有一个共同特点：<strong>当前状态与之前的状态有关</strong>。CNN 无法建模这种时序依赖，我们需要一种新的网络结构——<strong>循环神经网络（RNN）</strong>。</p>
+<p>这篇文章从 RNN 的基本结构出发，逐步深入到长短期记忆网络（LSTM），最后用一个<strong>文本情感分类</strong>的实战案例收尾。</p>
+<hr>
+<h2 id="二、为什么需要-RNN？">二、为什么需要 RNN？</h2>
+<h3 id="2-1-序列数据的挑战">2.1 序列数据的挑战</h3>
+<p>假设我们要预测句子&quot;我今天很开心&quot;的情感。如果用普通神经网络：</p>
+<ol>
+<li>把每个词编码成 one-hot 向量；</li>
+<li>拼接成一个大向量输入全连接层；</li>
+<li>输出情感类别。</li>
+</ol>
+<p>问题很明显：</p>
+<ul>
+<li><strong>丢失了顺序信息</strong>：“不 是 很 好” 和 “很 好 不 是” 被当成一样的输入；</li>
+<li><strong>输入长度固定</strong>：不同长度的句子需要填充或截断；</li>
+<li><strong>没有记忆</strong>：不知道前面的词是什么。</li>
+</ul>
+<h3 id="2-2-RNN-的核心思想">2.2 RNN 的核心思想</h3>
+<p>RNN 的关键设计：<strong>引入隐藏状态（Hidden State），让网络有&quot;记忆&quot;</strong>。</p>
+<p>在每个时间步，RNN 接收两个输入：</p>
+<ul>
+<li>当前输入 $x_t$（当前词/当前时刻的数据）</li>
+<li>上一时刻的隐藏状态 $h_{t-1}$（之前的记忆）</li>
+</ul>
+<p>然后输出：</p>
+<ul>
+<li>当前时刻的隐藏状态 $h_t$（更新后的记忆）</li>
+<li>当前时刻的预测 $y_t$（可选）</li>
+</ul>
+<hr>
+<h2 id="三、RNN-的结构与公式">三、RNN 的结构与公式</h2>
+<h3 id="3-1-基本结构">3.1 基本结构</h3>
+<p>RNN 的核心计算只有两步：</p>
+<p>$$h_t = \tanh(W_{hh} h_{t-1} + W_{xh} x_t + b_h)$$</p>
+<p>$$y_t = W_{hy} h_t + b_y$$</p>
+<p>其中：</p>
+<ul>
+<li>$x_t$：时刻 $t$ 的输入（维度 $d_{in}$）</li>
+<li>$h_t$：时刻 $t$ 的隐藏状态（维度 $d_{hidden}$）</li>
+<li>$W_{xh}$：输入到隐藏的权重（$d_{hidden} \times d_{in}$）</li>
+<li>$W_{hh}$：隐藏到隐藏的权重（$d_{hidden} \times d_{hidden}$）</li>
+<li>$W_{hy}$：隐藏到输出的权重（$d_{out} \times d_{hidden}$）</li>
+<li>$\tanh$：激活函数，输出范围 $(-1, 1)$</li>
+</ul>
+<h3 id="3-2-展开视角">3.2 展开视角</h3>
+<p>如果把 RNN 按时间展开，它就是一个<strong>很深的网络</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">x1 → [RNN Cell] → h1 → [RNN Cell] → h2 → [RNN Cell] → h3</span><br><span class="line">        ↑                ↑                ↑</span><br><span class="line">       h0               h1               h2</span><br><span class="line">      (初始)          (记忆1)          (记忆2)</span><br></pre></td></tr></table></figure>
+<p><strong>关键洞察</strong>：所有时间步共享同一套参数 $(W_{hh}, W_{xh}, b_h)$，这大大减少了参数量。</p>
+<h3 id="3-3-PyTorch-实现">3.3 PyTorch 实现</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> torch</span><br><span class="line"><span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn</span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义 RNN</span></span><br><span class="line">rnn = nn.RNN(</span><br><span class="line">    input_size=<span class="number">10</span>,    <span class="comment"># 输入特征维度（如词向量维度）</span></span><br><span class="line">    hidden_size=<span class="number">20</span>,   <span class="comment"># 隐藏状态维度</span></span><br><span class="line">    num_layers=<span class="number">1</span>,     <span class="comment"># RNN 层数</span></span><br><span class="line">    batch_first=<span class="literal">True</span>  <span class="comment"># 输入格式为 (batch, seq, feature)</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 输入: (batch_size, seq_len, input_size)</span></span><br><span class="line">x = torch.randn(<span class="number">2</span>, <span class="number">5</span>, <span class="number">10</span>)  <span class="comment"># batch=2, 序列长度=5, 特征维度=10</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 前向传播</span></span><br><span class="line">output, hidden = rnn(x)</span><br><span class="line"><span class="comment"># output: (2, 5, 20) - 每个时间步的输出</span></span><br><span class="line"><span class="comment"># hidden: (1, 2, 20) - 最后时刻的隐藏状态</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="四、RNN-的变体">四、RNN 的变体</h2>
+<p>根据输入输出的不同，RNN 有几种常见结构：</p>
+<table>
+<thead>
+<tr>
+<th>结构</th>
+<th>输入</th>
+<th>输出</th>
+<th>典型应用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>一对一</strong></td>
+<td>单输入</td>
+<td>单输出</td>
+<td>普通神经网络</td>
+</tr>
+<tr>
+<td><strong>一对多</strong></td>
+<td>单输入</td>
+<td>序列输出</td>
+<td>图像描述生成</td>
+</tr>
+<tr>
+<td><strong>多对一</strong></td>
+<td>序列输入</td>
+<td>单输出</td>
+<td>文本情感分类</td>
+</tr>
+<tr>
+<td><strong>多对多</strong></td>
+<td>序列输入</td>
+<td>序列输出</td>
+<td>机器翻译、语音识别</td>
+</tr>
+<tr>
+<td><strong>多对多（同步）</strong></td>
+<td>序列输入</td>
+<td>每个输入对应输出</td>
+<td>视频逐帧分类、NER</td>
+</tr>
+</tbody>
+</table>
+<h3 id="4-1-多对一：情感分类">4.1 多对一：情感分类</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">SentimentRNN</span>(nn.Module):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, vocab_size, embed_dim, hidden_dim, output_dim</span>):</span><br><span class="line">        <span class="built_in">super</span>().__init__()</span><br><span class="line">        <span class="variable language_">self</span>.embedding = nn.Embedding(vocab_size, embed_dim)</span><br><span class="line">        <span class="variable language_">self</span>.rnn = nn.RNN(embed_dim, hidden_dim, batch_first=<span class="literal">True</span>)</span><br><span class="line">        <span class="variable language_">self</span>.fc = nn.Linear(hidden_dim, output_dim)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, x</span>):</span><br><span class="line">        <span class="comment"># x: (batch, seq_len)</span></span><br><span class="line">        embedded = <span class="variable language_">self</span>.embedding(x)  <span class="comment"># (batch, seq_len, embed_dim)</span></span><br><span class="line">        _, hidden = <span class="variable language_">self</span>.rnn(embedded)  <span class="comment"># hidden: (1, batch, hidden_dim)</span></span><br><span class="line">        <span class="keyword">return</span> <span class="variable language_">self</span>.fc(hidden.squeeze(<span class="number">0</span>))  <span class="comment"># (batch, output_dim)</span></span><br></pre></td></tr></table></figure>
+<h3 id="4-2-多对多：序列生成">4.2 多对多：序列生成</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 每个时间步都输出一个预测</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Seq2SeqRNN</span>(nn.Module):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, input_dim, hidden_dim, output_dim</span>):</span><br><span class="line">        <span class="built_in">super</span>().__init__()</span><br><span class="line">        <span class="variable language_">self</span>.rnn = nn.RNN(input_dim, hidden_dim, batch_first=<span class="literal">True</span>)</span><br><span class="line">        <span class="variable language_">self</span>.fc = nn.Linear(hidden_dim, output_dim)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, x</span>):</span><br><span class="line">        output, _ = <span class="variable language_">self</span>.rnn(x)  <span class="comment"># output: (batch, seq_len, hidden_dim)</span></span><br><span class="line">        <span class="keyword">return</span> <span class="variable language_">self</span>.fc(output)   <span class="comment"># (batch, seq_len, output_dim)</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="五、RNN-的致命缺陷：梯度消失与梯度爆炸">五、RNN 的致命缺陷：梯度消失与梯度爆炸</h2>
+<h3 id="5-1-问题现象">5.1 问题现象</h3>
+<p>RNN 展开后是一个<strong>很深的网络</strong>（深度 = 序列长度）。当序列很长时：</p>
+<ul>
+<li><strong>梯度消失</strong>：梯度在反向传播时不断乘以小于1的数，前面层的梯度趋近于0，模型&quot;记不住&quot;久远的信息；</li>
+<li><strong>梯度爆炸</strong>：梯度不断乘以大于1的数，前面层的梯度指数级增长，参数更新失控。</li>
+</ul>
+<h3 id="5-2-数学解释">5.2 数学解释</h3>
+<p>RNN 的反向传播涉及对 $W_{hh}$ 的多次连乘：</p>
+<p>$$\frac{\partial L}{\partial h_1} = \frac{\partial L}{\partial h_T} \cdot \prod_{t=2}^{T} \frac{\partial h_t}{\partial h_{t-1}} = \frac{\partial L}{\partial h_T} \cdot \prod_{t=2}^{T} W_{hh}^T \cdot \text{diag}(1 - \tanh^2(\cdot))$$</p>
+<p>如果 $W_{hh}$ 的特征值大于1，梯度爆炸；小于1，梯度消失。</p>
+<h3 id="5-3-缓解方法">5.3 缓解方法</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>原理</th>
+<th>效果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>梯度裁剪（Gradient Clipping）</strong></td>
+<td>设定梯度范数上限</td>
+<td>防止梯度爆炸</td>
+</tr>
+<tr>
+<td><strong>使用 ReLU 替代 tanh</strong></td>
+<td>导数为0或1，缓解梯度消失</td>
+<td>效果有限</td>
+</tr>
+<tr>
+<td><strong>更好的初始化</strong></td>
+<td>正交初始化 $W_{hh}$</td>
+<td>部分缓解</td>
+</tr>
+<tr>
+<td><strong>LSTM/GRU</strong></td>
+<td>引入门控机制</td>
+<td><strong>根本解决</strong></td>
+</tr>
+</tbody>
+</table>
+<p>梯度裁剪代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">loss.backward()</span><br><span class="line">torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=<span class="number">5</span>)  <span class="comment"># 裁剪到范数5</span></span><br><span class="line">optimizer.step()</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="六、LSTM：长短期记忆网络">六、LSTM：长短期记忆网络</h2>
+<h3 id="6-1-核心思想">6.1 核心思想</h3>
+<p>LSTM（Long Short-Term Memory）通过<strong>门控机制</strong>控制信息的流动：</p>
+<ul>
+<li><strong>遗忘门</strong>：决定丢弃哪些旧信息；</li>
+<li><strong>输入门</strong>：决定存储哪些新信息；</li>
+<li><strong>输出门</strong>：决定输出哪些信息。</li>
+</ul>
+<p>关键是引入<strong>细胞状态（Cell State）</strong> $C_t$，它像一条&quot;传送带&quot;，信息可以不变地流过，解决了梯度消失问题。</p>
+<h3 id="6-2-LSTM-的完整公式">6.2 LSTM 的完整公式</h3>
+<p><strong>遗忘门</strong>（forget gate）：<br>
+$$f_t = \sigma(W_f \cdot [h_{t-1}, x_t] + b_f)$$</p>
+<p><strong>输入门</strong>（input gate）：<br>
+$$i_t = \sigma(W_i \cdot [h_{t-1}, x_t] + b_i)$$<br>
+$$\tilde{C}<em>t = \tanh(W_C \cdot [h</em>{t-1}, x_t] + b_C)$$</p>
+<p><strong>更新细胞状态</strong>：<br>
+$$C_t = f_t \odot C_{t-1} + i_t \odot \tilde{C}_t$$</p>
+<p><strong>输出门</strong>（output gate）：<br>
+$$o_t = \sigma(W_o \cdot [h_{t-1}, x_t] + b_o)$$<br>
+$$h_t = o_t \odot \tanh(C_t)$$</p>
+<p>其中 $\odot$ 表示逐元素乘法（Hadamard积），$\sigma$ 是 sigmoid 函数（输出0~1，作为门的开关）。</p>
+<h3 id="6-3-LSTM-的直观理解">6.3 LSTM 的直观理解</h3>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">细胞状态 C_t-1  ───────────────────────────────→  C_t</span><br><span class="line">                    ↑           ↑</span><br><span class="line">               遗忘门 f_t    输入门 i_t</span><br><span class="line">                    ↓           ↓</span><br><span class="line">               丢弃旧信息    添加新信息</span><br><span class="line">                    </span><br><span class="line">隐藏状态 h_t-1 ──→ [LSTM Cell] ──→ h_t</span><br><span class="line">        x_t    ──→           ──→ (输出)</span><br></pre></td></tr></table></figure>
+<ul>
+<li><strong>遗忘门 = 0</strong>：完全丢弃旧记忆；</li>
+<li><strong>遗忘门 = 1</strong>：完全保留旧记忆；</li>
+<li><strong>输入门 = 0</strong>：不添加新信息；</li>
+<li><strong>输入门 = 1</strong>：完全接受新候选。</li>
+</ul>
+<h3 id="6-4-PyTorch-实现-LSTM">6.4 PyTorch 实现 LSTM</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">lstm = nn.LSTM(</span><br><span class="line">    input_size=<span class="number">10</span>,</span><br><span class="line">    hidden_size=<span class="number">20</span>,</span><br><span class="line">    num_layers=<span class="number">2</span>,      <span class="comment"># 堆叠2层LSTM</span></span><br><span class="line">    batch_first=<span class="literal">True</span>,</span><br><span class="line">    dropout=<span class="number">0.3</span>        <span class="comment"># 层间dropout（仅num_layers&gt;1时有效）</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">x = torch.randn(<span class="number">2</span>, <span class="number">5</span>, <span class="number">10</span>)  <span class="comment"># (batch, seq_len, input_size)</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># LSTM 返回 output 和 (hidden, cell)</span></span><br><span class="line">output, (hidden, cell) = lstm(x)</span><br><span class="line"><span class="comment"># output: (2, 5, 20) - 每个时间步的输出</span></span><br><span class="line"><span class="comment"># hidden: (2, 2, 20) - 每层最后时刻的隐藏状态</span></span><br><span class="line"><span class="comment"># cell:   (2, 2, 20) - 每层最后时刻的细胞状态</span></span><br></pre></td></tr></table></figure>
+<h3 id="6-5-GRU：LSTM-的简化版">6.5 GRU：LSTM 的简化版</h3>
+<p>GRU（Gated Recurrent Unit）将遗忘门和输入门合并为<strong>更新门</strong>，结构更简单：</p>
+<p>$$z_t = \sigma(W_z \cdot [h_{t-1}, x_t]) \quad \text{(更新门)}$$<br>
+$$r_t = \sigma(W_r \cdot [h_{t-1}, x_t]) \quad \text{(重置门)}$$<br>
+$$\tilde{h}<em>t = \tanh(W \cdot [r_t \odot h</em>{t-1}, x_t])$$<br>
+$$h_t = (1 - z_t) \odot h_{t-1} + z_t \odot \tilde{h}_t$$</p>
+<p><strong>GRU vs LSTM</strong>：</p>
+<ul>
+<li>GRU 参数量更少，训练更快；</li>
+<li>效果上两者相当，GRU 在数据量小时可能更好；</li>
+<li>LSTM 表达能力更强，在复杂任务上略优。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># PyTorch GRU</span></span><br><span class="line">gru = nn.GRU(input_size=<span class="number">10</span>, hidden_size=<span class="number">20</span>, num_layers=<span class="number">1</span>, batch_first=<span class="literal">True</span>)</span><br><span class="line">output, hidden = gru(x)</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="七、双向-RNN-与多层堆叠">七、双向 RNN 与多层堆叠</h2>
+<h3 id="7-1-双向-RNN（Bi-RNN）">7.1 双向 RNN（Bi-RNN）</h3>
+<p>有些任务需要<strong>同时考虑过去和未来的信息</strong>，比如命名实体识别（NER）：</p>
+<blockquote>
+<p>“我在<strong>北京</strong>工作” —— 知道&quot;工作&quot;在后面，才能确定&quot;北京&quot;是地点而非人名。</p>
+</blockquote>
+<p>双向 RNN 同时运行两个 RNN：</p>
+<ul>
+<li>一个<strong>正向</strong>处理序列（从左到右）；</li>
+<li>一个<strong>反向</strong>处理序列（从右到左）；</li>
+<li>最后拼接两个方向的隐藏状态。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 双向 LSTM</span></span><br><span class="line">bi_lstm = nn.LSTM(</span><br><span class="line">    input_size=<span class="number">10</span>,</span><br><span class="line">    hidden_size=<span class="number">20</span>,</span><br><span class="line">    num_layers=<span class="number">1</span>,</span><br><span class="line">    batch_first=<span class="literal">True</span>,</span><br><span class="line">    bidirectional=<span class="literal">True</span>  <span class="comment"># 启用双向</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">output, _ = bi_lstm(x)</span><br><span class="line"><span class="comment"># output: (batch, seq_len, 40) - 20*2，两个方向拼接</span></span><br></pre></td></tr></table></figure>
+<h3 id="7-2-多层堆叠">7.2 多层堆叠</h3>
+<p>像 CNN 一样，RNN 也可以堆叠多层，提取更高层次的特征：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 3层双向 LSTM</span></span><br><span class="line">stacked_lstm = nn.LSTM(</span><br><span class="line">    input_size=<span class="number">10</span>,</span><br><span class="line">    hidden_size=<span class="number">20</span>,</span><br><span class="line">    num_layers=<span class="number">3</span>,</span><br><span class="line">    batch_first=<span class="literal">True</span>,</span><br><span class="line">    bidirectional=<span class="literal">True</span>,</span><br><span class="line">    dropout=<span class="number">0.3</span>  <span class="comment"># 层间dropout</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="八、综合实战：IMDB-情感分类">八、综合实战：IMDB 情感分类</h2>
+<p>下面用 LSTM 实现一个完整的<strong>电影评论情感分类</strong>模型：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> torch</span><br><span class="line"><span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn</span><br><span class="line"><span class="keyword">from</span> torch.utils.data <span class="keyword">import</span> DataLoader</span><br><span class="line"><span class="keyword">from</span> torchvision <span class="keyword">import</span> datasets</span><br><span class="line"><span class="keyword">import</span> torchvision.transforms <span class="keyword">as</span> transforms</span><br><span class="line"></span><br><span class="line"><span class="comment"># 加载 IMDB 数据集（使用 torchtext 或手动处理）</span></span><br><span class="line"><span class="comment"># 这里简化展示核心模型结构</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">LSTMSentiment</span>(nn.Module):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, vocab_size, embed_dim=<span class="number">128</span>, hidden_dim=<span class="number">256</span>, </span></span><br><span class="line"><span class="params">                 num_layers=<span class="number">2</span>, output_dim=<span class="number">1</span>, dropout=<span class="number">0.5</span></span>):</span><br><span class="line">        <span class="built_in">super</span>().__init__()</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 词嵌入层</span></span><br><span class="line">        <span class="variable language_">self</span>.embedding = nn.Embedding(vocab_size, embed_dim, padding_idx=<span class="number">0</span>)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 双向 LSTM</span></span><br><span class="line">        <span class="variable language_">self</span>.lstm = nn.LSTM(</span><br><span class="line">            embed_dim, </span><br><span class="line">            hidden_dim, </span><br><span class="line">            num_layers=num_layers,</span><br><span class="line">            bidirectional=<span class="literal">True</span>,</span><br><span class="line">            dropout=dropout <span class="keyword">if</span> num_layers &gt; <span class="number">1</span> <span class="keyword">else</span> <span class="number">0</span>,</span><br><span class="line">            batch_first=<span class="literal">True</span></span><br><span class="line">        )</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 分类层</span></span><br><span class="line">        <span class="variable language_">self</span>.dropout = nn.Dropout(dropout)</span><br><span class="line">        <span class="variable language_">self</span>.fc = nn.Linear(hidden_dim * <span class="number">2</span>, output_dim)  <span class="comment"># *2 for bidirectional</span></span><br><span class="line">        </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, text, lengths</span>):</span><br><span class="line">        <span class="comment"># text: (batch, seq_len)</span></span><br><span class="line">        embedded = <span class="variable language_">self</span>.dropout(<span class="variable language_">self</span>.embedding(text))  <span class="comment"># (batch, seq_len, embed_dim)</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># Pack sequence for efficient processing</span></span><br><span class="line">        packed = nn.utils.rnn.pack_padded_sequence(</span><br><span class="line">            embedded, lengths.cpu(), batch_first=<span class="literal">True</span>, enforce_sorted=<span class="literal">False</span></span><br><span class="line">        )</span><br><span class="line">        </span><br><span class="line">        packed_output, (hidden, cell) = <span class="variable language_">self</span>.lstm(packed)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># hidden: (num_layers * 2, batch, hidden_dim)</span></span><br><span class="line">        <span class="comment"># 取最后一层的正向和反向隐藏状态</span></span><br><span class="line">        hidden = torch.cat((hidden[-<span class="number">2</span>], hidden[-<span class="number">1</span>]), dim=<span class="number">1</span>)  <span class="comment"># (batch, hidden_dim * 2)</span></span><br><span class="line">        </span><br><span class="line">        hidden = <span class="variable language_">self</span>.dropout(hidden)</span><br><span class="line">        <span class="keyword">return</span> <span class="variable language_">self</span>.fc(hidden)  <span class="comment"># (batch, 1)</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 训练循环</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">train_epoch</span>(<span class="params">model, iterator, optimizer, criterion</span>):</span><br><span class="line">    model.train()</span><br><span class="line">    epoch_loss = <span class="number">0</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> batch <span class="keyword">in</span> iterator:</span><br><span class="line">        text, text_lengths = batch.text</span><br><span class="line">        labels = batch.label.<span class="built_in">float</span>()</span><br><span class="line">        </span><br><span class="line">        optimizer.zero_grad()</span><br><span class="line">        predictions = model(text, text_lengths).squeeze(<span class="number">1</span>)</span><br><span class="line">        loss = criterion(predictions, labels)</span><br><span class="line">        </span><br><span class="line">        loss.backward()</span><br><span class="line">        torch.nn.utils.clip_grad_norm_(model.parameters(), <span class="number">1</span>)  <span class="comment"># 梯度裁剪</span></span><br><span class="line">        optimizer.step()</span><br><span class="line">        </span><br><span class="line">        epoch_loss += loss.item()</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> epoch_loss / <span class="built_in">len</span>(iterator)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用示例</span></span><br><span class="line">VOCAB_SIZE = <span class="number">10000</span></span><br><span class="line">model = LSTMSentiment(VOCAB_SIZE)</span><br><span class="line">optimizer = torch.optim.Adam(model.parameters(), lr=<span class="number">1e-3</span>)</span><br><span class="line">criterion = nn.BCEWithLogitsLoss()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 假设有数据迭代器 train_iterator</span></span><br><span class="line"><span class="comment"># for epoch in range(10):</span></span><br><span class="line"><span class="comment">#     loss = train_epoch(model, train_iterator, optimizer, criterion)</span></span><br><span class="line"><span class="comment">#     print(f&quot;Epoch &#123;epoch+1&#125;, Loss: &#123;loss:.4f&#125;&quot;)</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="九、RNN-的局限与-Transformer-的崛起">九、RNN 的局限与 Transformer 的崛起</h2>
+<h3 id="9-1-RNN-LSTM-的问题">9.1 RNN/LSTM 的问题</h3>
+<p>尽管 LSTM 缓解了梯度消失，但仍有一些根本局限：</p>
+<table>
+<thead>
+<tr>
+<th>问题</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>串行计算</strong></td>
+<td>必须按顺序处理，无法并行，训练慢；</td>
+</tr>
+<tr>
+<td><strong>长程依赖仍有限</strong></td>
+<td>超过100步的依赖仍难以捕捉；</td>
+</tr>
+<tr>
+<td><strong>难以捕捉全局关系</strong></td>
+<td>&quot;它&quot;指代句子开头的哪个词？需要全局注意力。</td>
+</tr>
+</tbody>
+</table>
+<h3 id="9-2-Transformer-的解决方案">9.2 Transformer 的解决方案</h3>
+<p>2017年，Transformer 架构提出<strong>自注意力机制（Self-Attention）</strong>：</p>
+<ul>
+<li><strong>完全并行</strong>：一次性看到整个序列；</li>
+<li><strong>任意距离依赖</strong>：任意两个位置的关联直接计算；</li>
+<li><strong>成为现代 NLP/CV 的基石</strong>：BERT、GPT、ViT 都基于 Transformer。</li>
+</ul>
+<p><strong>RNN 并未完全淘汰</strong>：</p>
+<ul>
+<li>资源受限场景（移动端）；</li>
+<li>实时流式处理（必须按顺序）；</li>
+<li>小数据集（RNN 参数少，不易过拟合）。</li>
+</ul>
+<hr>
+<h2 id="十、总结">十、总结</h2>
+<table>
+<thead>
+<tr>
+<th>知识点</th>
+<th>要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>RNN 核心</strong></td>
+<td>隐藏状态传递记忆，参数共享；</td>
+</tr>
+<tr>
+<td><strong>梯度问题</strong></td>
+<td>长序列导致梯度消失/爆炸；</td>
+</tr>
+<tr>
+<td><strong>LSTM 解决</strong></td>
+<td>门控机制 + 细胞状态，保留长期记忆；</td>
+</tr>
+<tr>
+<td><strong>GRU</strong></td>
+<td>LSTM 的简化版，效果相当；</td>
+</tr>
+<tr>
+<td><strong>双向/多层</strong></td>
+<td>捕捉双向信息，提取层次特征；</td>
+</tr>
+<tr>
+<td><strong>实战技巧</strong></td>
+<td>梯度裁剪、pack_padded_sequence、取最后时刻隐藏状态；</td>
+</tr>
+<tr>
+<td><strong>演进路线</strong></td>
+<td>RNN → LSTM/GRU → Attention → Transformer。</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>关键洞察</strong>：RNN 教会了我们如何建模序列，LSTM 教会了我们如何用门控保护梯度。这些思想在 Transformer 中依然延续——只是换了一种实现方式。</p>
+</blockquote>
+<hr>
+<h2 id="附录：RNN-LSTM-速查表">附录：RNN/LSTM 速查表</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># RNN</span></span><br><span class="line">nn.RNN(input_size, hidden_size, num_layers, batch_first=<span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># LSTM</span></span><br><span class="line">nn.LSTM(input_size, hidden_size, num_layers, </span><br><span class="line">        batch_first=<span class="literal">True</span>, bidirectional=<span class="literal">True</span>, dropout=<span class="number">0.5</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># GRU</span></span><br><span class="line">nn.GRU(input_size, hidden_size, num_layers, batch_first=<span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 梯度裁剪</span></span><br><span class="line">torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=<span class="number">1.0</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 序列填充（处理变长序列）</span></span><br><span class="line"><span class="keyword">from</span> torch.nn.utils.rnn <span class="keyword">import</span> pad_sequence, pack_padded_sequence</span><br><span class="line">padded = pad_sequence(sequences, batch_first=<span class="literal">True</span>, padding_value=<span class="number">0</span>)</span><br><span class="line">packed = pack_padded_sequence(padded, lengths, batch_first=<span class="literal">True</span>, enforce_sorted=<span class="literal">False</span>)</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://paywqiao-max.github.io/2026/04/07/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%B8%89%EF%BC%89%EF%BC%9A%E5%BE%AA%E7%8E%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9CRNN%E4%B8%8ELSTM/" data-id="cuidhCb3T51HwEAt6HriACFmx" data-title="机器学习基础（十三）：循环神经网络RNN与LSTM" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/LSTM/" rel="tag">LSTM</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/PyTorch/" rel="tag">PyTorch</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/RNN/" rel="tag">RNN</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%BA%8F%E5%88%97%E5%BB%BA%E6%A8%A1/" rel="tag">序列建模</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" rel="tag">深度学习</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-机器学习基础（十二）：优化器大全" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
     <a href="/2026/04/06/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%BA%8C%EF%BC%89%EF%BC%9A%E4%BC%98%E5%8C%96%E5%99%A8%E5%A4%A7%E5%85%A8/" class="article-date">
@@ -404,7 +752,7 @@ $$\theta_t = \theta_{t-1} - \frac{\eta}{\sqrt{\hat{v}_t} + \epsilon} \cdot \hat{
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/04/06/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%BA%8C%EF%BC%89%EF%BC%9A%E4%BC%98%E5%8C%96%E5%99%A8%E5%A4%A7%E5%85%A8/" data-id="cuidbFCAXplIC7MKl0T0kLYV-" data-title="机器学习基础（十二）：优化器大全" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/04/06/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%BA%8C%EF%BC%89%EF%BC%9A%E4%BC%98%E5%8C%96%E5%99%A8%E5%A4%A7%E5%85%A8/" data-id="cuid0l8AN7bPg_Si1Gh7fkMOj" data-title="机器学习基础（十二）：优化器大全" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -869,7 +1217,7 @@ $$\theta_t = \theta_{t-1} - \frac{\eta}{\sqrt{\hat{v}_t} + \epsilon} \cdot \hat{
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/04/04/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89%EF%BC%9A%E8%BF%87%E6%8B%9F%E5%90%88%E4%B8%8E%E6%AD%A3%E5%88%99%E5%8C%96/" data-id="cuidZ2R0VEzRd3g3LI0ZLBnbS" data-title="机器学习基础（十一）：过拟合与正则化" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/04/04/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89%EF%BC%9A%E8%BF%87%E6%8B%9F%E5%90%88%E4%B8%8E%E6%AD%A3%E5%88%99%E5%8C%96/" data-id="cuidhPOfNw36-iYLzha9udZrW" data-title="机器学习基础（十一）：过拟合与正则化" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -1337,7 +1685,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/04/03/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%EF%BC%89%EF%BC%9A%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9CCNN/" data-id="cuidIc978spQi8ZhYTDA2Fz3e" data-title="机器学习基础（十）：卷积神经网络CNN" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/04/03/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%EF%BC%89%EF%BC%9A%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9CCNN/" data-id="cuidMVruZp9W2utxs2sToQ-4z" data-title="机器学习基础（十）：卷积神经网络CNN" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -1663,7 +2011,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/04/02/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B9%9D%EF%BC%89%EF%BC%9APyTorch%E5%85%A5%E9%97%A8/" data-id="cuidW4lfOXOYt2BwQwXg56ntR" data-title="机器学习基础（九）：PyTorch入门" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/04/02/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B9%9D%EF%BC%89%EF%BC%9APyTorch%E5%85%A5%E9%97%A8/" data-id="cuidxQlaobA5kJBpSucFJD9FC" data-title="机器学习基础（九）：PyTorch入门" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -1927,7 +2275,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/04/01/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%85%AB%EF%BC%89%EF%BC%9A%E9%80%BB%E8%BE%91%E5%9B%9E%E5%BD%92/" data-id="cuid56TG9kwJxIstu5zqVdui0" data-title="机器学习基础（八）：逻辑回归" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/04/01/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%85%AB%EF%BC%89%EF%BC%9A%E9%80%BB%E8%BE%91%E5%9B%9E%E5%BD%92/" data-id="cuiddMkXICEYPs87Cp4u9vOEt" data-title="机器学习基础（八）：逻辑回归" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -2180,7 +2528,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/03/31/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%83%EF%BC%89%EF%BC%9A%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0/" data-id="cuidiEJcn0DcxX5KwggjmUw1i" data-title="机器学习基础（七）：激活函数" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/03/31/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%83%EF%BC%89%EF%BC%9A%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0/" data-id="cuidvnypP1VFQLiouQJrAgdvX" data-title="机器学习基础（七）：激活函数" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -2356,7 +2704,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/03/30/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%85%AD%EF%BC%89%EF%BC%9A%E4%BB%8E0%E7%90%86%E8%A7%A3%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92%E2%80%94%E2%80%94%E4%BB%8E%E5%85%AC%E5%BC%8F%E5%88%B0%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/" data-id="cuidOuhfkmu0N9la_UzPxqDM1" data-title="机器学习基础（六）：从0理解线性回归——从公式到代码实现" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/03/30/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%85%AD%EF%BC%89%EF%BC%9A%E4%BB%8E0%E7%90%86%E8%A7%A3%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92%E2%80%94%E2%80%94%E4%BB%8E%E5%85%AC%E5%BC%8F%E5%88%B0%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/" data-id="cuid8booNWsXtGJoGwprKKZu5" data-title="机器学习基础（六）：从0理解线性回归——从公式到代码实现" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -2534,7 +2882,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/03/28/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%BA%94%EF%BC%89%E4%BB%8E0%E7%90%86%E8%A7%A3%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD%EF%BC%9A%E6%A2%AF%E5%BA%A6%E5%88%B0%E5%BA%95%E6%98%AF%E6%80%8E%E4%B9%88%E6%9D%A5%E7%9A%84%EF%BC%9F/" data-id="cuidCr037-2QEVyXxY-kQPZDZ" data-title="机器学习基础（五）从0理解反向传播：梯度到底是怎么来的？" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/03/28/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%BA%94%EF%BC%89%E4%BB%8E0%E7%90%86%E8%A7%A3%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD%EF%BC%9A%E6%A2%AF%E5%BA%A6%E5%88%B0%E5%BA%95%E6%98%AF%E6%80%8E%E4%B9%88%E6%9D%A5%E7%9A%84%EF%BC%9F/" data-id="cuidZY-RDwXCBeTBOXkFr6wid" data-title="机器学习基础（五）从0理解反向传播：梯度到底是怎么来的？" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -2670,221 +3018,11 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9A%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0%E4%B8%8E%E4%BC%98%E5%8C%96%E7%9B%AE%E6%A0%87/" data-id="cuidngcs_v10pS7HYjxmrTgfE" data-title="机器学习基础（四）：损失函数与优化目标" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9A%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0%E4%B8%8E%E4%BC%98%E5%8C%96%E7%9B%AE%E6%A0%87/" data-id="cuidFn11W3Shsx1kgj2I904FT" data-title="机器学习基础（四）：损失函数与优化目标" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" rel="tag">优化方法</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" rel="tag">学习记录</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" rel="tag">数学基础</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" rel="tag">线性代数</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-机器学习基础（三）：从欧式距离到梯度下降" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9A%E4%BB%8E%E6%AC%A7%E5%BC%8F%E8%B7%9D%E7%A6%BB%E5%88%B0%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" class="article-date">
-  <time class="dt-published" datetime="2026-03-26T16:00:00.000Z" itemprop="datePublished">2026-03-27</time>
-</a>
-    
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a>
-  </div>
-
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="p-name article-title" href="/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9A%E4%BB%8E%E6%AC%A7%E5%BC%8F%E8%B7%9D%E7%A6%BB%E5%88%B0%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/">机器学习基础（三）：从欧式距离到梯度下降</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
-        <p>Day 3 学习记录</p>
-<p>一、今日学习目标</p>
-<p>由于今日状态不佳，重点攻克两个核心概念：</p>
-<ul>
-<li>向量的距离（欧式距离）</li>
-<li>梯度与梯度下降</li>
-</ul>
-<hr>
-<p>二、向量的距离（欧式距离）</p>
-<p>本质</p>
-<p>两个向量之间的直线距离</p>
-<hr>
-<p>基本公式</p>
-<p>设两个向量：</p>
-<p>$\boldsymbol{a}, \boldsymbol{b}$<br>
-$$<br>
-d(\boldsymbol{a}, \boldsymbol{b}) = \sqrt{\sum_{i=1}^{n}(a_i - b_i)^2}<br>
-$$</p>
-<hr>
-<p>等价形式</p>
-<ol>
-<li>列向量形式（线性代数常用）</li>
-</ol>
-<p>$$<br>
-d(\boldsymbol{a}, \boldsymbol{b}) = \sqrt{(\boldsymbol{a} - \boldsymbol{b})^T (\boldsymbol{a} - \boldsymbol{b})}<br>
-$$</p>
-<ol start="2">
-<li>行向量形式（代码中常见）</li>
-</ol>
-<p>$$<br>
-d(\boldsymbol{a}, \boldsymbol{b}) = \sqrt{(\boldsymbol{a} - \boldsymbol{b})(\boldsymbol{a} - \boldsymbol{b})^T}<br>
-$$</p>
-<ol start="3">
-<li>范数形式（论文常用）</li>
-</ol>
-<p>$$<br>
-d(\boldsymbol{a}, \boldsymbol{b}) = | \boldsymbol{a} - \boldsymbol{b} |_2<br>
-$$</p>
-<p>本质：欧式距离等于向量差的 L2 范数</p>
-<hr>
-<p>与损失函数的关系（MSE）</p>
-<p>$$<br>
-MSE = \frac{1}{2m} \sum_{i=1}^m (y_{pred}^{(i)} - y_{true}^{(i)})^2<br>
-= \frac{1}{2m} | \boldsymbol{y_{pred}} - \boldsymbol{y_{true}} |_2^2<br>
-$$</p>
-<hr>
-<p>三、梯度与梯度下降</p>
-<hr>
-<ol>
-<li>梯度（Gradient）</li>
-</ol>
-<p>定义</p>
-<p>对于函数：</p>
-<p>$$<br>
-f(\boldsymbol{x}) = f(x_1, x_2, …, x_n)<br>
-$$</p>
-<p>其中：</p>
-<p>$$<br>
-\boldsymbol{x} =<br>
-\begin{pmatrix}<br>
-x_1 \\<br>
-x_2 \\<br>
-\vdots \\<br>
-x_n<br>
-\end{pmatrix}<br>
-$$</p>
-<p>梯度定义为：</p>
-<p>$$<br>
-\nabla f(\boldsymbol{x}) =<br>
-\begin{pmatrix}<br>
-\frac{\partial f}{\partial x_1} \\<br>
-\frac{\partial f}{\partial x_2} \\<br>
-\vdots \\<br>
-\frac{\partial f}{\partial x_n}<br>
-\end{pmatrix}<br>
-$$</p>
-<hr>
-<p>意义</p>
-<ul>
-<li>几何意义：函数增长最快的方向</li>
-<li>物理意义：最大变化率方向</li>
-<li>机器学习意义：参数对损失的影响程度</li>
-</ul>
-<hr>
-<p>作用</p>
-<ol>
-<li>指明优化方向（下降最快方向）</li>
-<li>衡量参数重要性</li>
-<li>连接模型与优化</li>
-<li>解决高维优化问题</li>
-</ol>
-<hr>
-<p>应用</p>
-<ul>
-<li>线性回归、逻辑回归</li>
-<li>神经网络反向传播</li>
-<li>优化器（SGD、Adam、RMSprop）</li>
-</ul>
-<hr>
-<ol start="2">
-<li>梯度下降（Gradient Descent）</li>
-</ol>
-<hr>
-<p>定义</p>
-<p>梯度下降是一种基于一阶导数的迭代优化算法，其核心逻辑是：沿目标函数在当前点的梯度反方向，以一定步长更新参数，使函数值逐步减小。</p>
-<hr>
-<p>迭代公式</p>
-<p>单变量：</p>
-<p>$$<br>
-x_{t+1} = x_t - \eta f’(x_t)<br>
-$$</p>
-<p>多变量：</p>
-<p>$$<br>
-\boldsymbol{x}_{t+1} = \boldsymbol{x}_t - \eta \nabla f(\boldsymbol{x}_t)<br>
-$$</p>
-<hr>
-<p>机器学习中的形式（线性回归）</p>
-<p>$$<br>
-\boldsymbol{W}_{t+1} = \boldsymbol{W}_t - \eta \cdot \frac{1}{m} \boldsymbol{X}^T (\boldsymbol{X}\boldsymbol{W}_t + b_t - \boldsymbol{y})<br>
-$$</p>
-<p>$$<br>
-b_{t+1} = b_t - \eta \cdot \frac{1}{m} \sum_{i=1}^m (\boldsymbol{x}^{(i)}\boldsymbol{W}_t + b_t - y^{(i)})<br>
-$$</p>
-<hr>
-<p>收敛条件</p>
-<p>满足以下任一条件时停止迭代：</p>
-<ul>
-<li>
-<p>梯度的模长趋近于 0：<br>
-$$<br>
-|\nabla f(\boldsymbol{x}_t)| &lt; \epsilon<br>
-$$</p>
-</li>
-<li>
-<p>目标函数变化量很小：<br>
-$$<br>
-|f(\boldsymbol{x}_{t+1}) - f(\boldsymbol{x}_t)| &lt; \epsilon<br>
-$$</p>
-</li>
-<li>
-<p>达到预设最大迭代次数</p>
-</li>
-</ul>
-<hr>
-<p>核心理解</p>
-<ul>
-<li>本质：一种逐步逼近最优解的搜索策略</li>
-<li>学习率：控制收敛速度与稳定性</li>
-<li>过程：不断从高损失区域向低损失区域移动</li>
-</ul>
-<hr>
-<p>作用</p>
-<ol>
-<li>机器学习模型训练的核心方法</li>
-<li>构建完整训练流程</li>
-<li>支撑深度学习模型</li>
-<li>降低优化问题复杂度</li>
-</ol>
-<hr>
-<p>总结</p>
-<p>今天主要学习了两个核心内容：</p>
-<ul>
-<li>欧式距离：用于衡量数据之间的差异</li>
-<li>梯度下降：用于优化模型参数</li>
-</ul>
-<p>这两部分共同构成了机器学习中的基础数学框架。</p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/03/27/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9A%E4%BB%8E%E6%AC%A7%E5%BC%8F%E8%B7%9D%E7%A6%BB%E5%88%B0%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" data-id="cuidXpLLZPv0azQGaMS1_ez0G" data-title="机器学习基础（三）：从欧式距离到梯度下降" class="article-share-link"><span class="fa fa-share">分享</span></a>
-      
-      
-      
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" rel="tag">数学基础</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li></ul>
 
     </footer>
   </div>
@@ -2919,7 +3057,7 @@ $$</p>
   <div class="widget-wrap">
     <h3 class="widget-title">标签</h3>
     <div class="widget">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0-%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C-%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0-ReLU/" rel="tag">-机器学习 -深度学习 -神经网络 -激活函数 -ReLU</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Adam/" rel="tag">Adam</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AdamW/" rel="tag">AdamW</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/BatchNorm/" rel="tag">BatchNorm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CNN/" rel="tag">CNN</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Dropout/" rel="tag">Dropout</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GPU%E5%8A%A0%E9%80%9F/" rel="tag">GPU加速</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NumPy/" rel="tag">NumPy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/PyTorch/" rel="tag">PyTorch</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Python/" rel="tag">Python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SGD/" rel="tag">SGD</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Sigmoid/" rel="tag">Sigmoid</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/scikit-learn/" rel="tag">scikit-learn</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BA%A4%E5%8F%89%E7%86%B5/" rel="tag">交叉熵</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%8E0%E5%BC%80%E5%A7%8B/" rel="tag">从0开始</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BC%98%E5%8C%96%E5%99%A8/" rel="tag">优化器</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" rel="tag">优化方法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%86%E7%B1%BB%E7%AE%97%E6%B3%95/" rel="tag">分类算法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" rel="tag">卷积神经网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD/" rel="tag">反向传播</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%9B%BE%E5%83%8F%E5%88%86%E7%B1%BB/" rel="tag">图像分类</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" rel="tag">学习记录</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" rel="tag">数学基础</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" rel="tag">梯度下降</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%AD%A3%E5%88%99%E5%8C%96/" rel="tag">正则化</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" rel="tag">深度学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%82%BC%E4%B8%B9%E6%8A%80%E5%B7%A7/" rel="tag">炼丹技巧</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" rel="tag">神经网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" rel="tag">线性代数</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92/" rel="tag">线性回归</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%87%AA%E5%8A%A8%E6%B1%82%E5%AF%BC/" rel="tag">自动求导</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/" rel="tag">计算机视觉</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%BF%87%E6%8B%9F%E5%90%88/" rel="tag">过拟合</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%80%BB%E8%BE%91%E5%9B%9E%E5%BD%92/" rel="tag">逻辑回归</a></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0-%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C-%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0-ReLU/" rel="tag">-机器学习 -深度学习 -神经网络 -激活函数 -ReLU</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Adam/" rel="tag">Adam</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AdamW/" rel="tag">AdamW</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/BatchNorm/" rel="tag">BatchNorm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CNN/" rel="tag">CNN</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Dropout/" rel="tag">Dropout</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GPU%E5%8A%A0%E9%80%9F/" rel="tag">GPU加速</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LSTM/" rel="tag">LSTM</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NumPy/" rel="tag">NumPy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/PyTorch/" rel="tag">PyTorch</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Python/" rel="tag">Python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/RNN/" rel="tag">RNN</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SGD/" rel="tag">SGD</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Sigmoid/" rel="tag">Sigmoid</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/scikit-learn/" rel="tag">scikit-learn</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BA%A4%E5%8F%89%E7%86%B5/" rel="tag">交叉熵</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%8E0%E5%BC%80%E5%A7%8B/" rel="tag">从0开始</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BC%98%E5%8C%96%E5%99%A8/" rel="tag">优化器</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" rel="tag">优化方法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%86%E7%B1%BB%E7%AE%97%E6%B3%95/" rel="tag">分类算法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" rel="tag">卷积神经网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD/" rel="tag">反向传播</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%9B%BE%E5%83%8F%E5%88%86%E7%B1%BB/" rel="tag">图像分类</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" rel="tag">学习记录</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%BA%8F%E5%88%97%E5%BB%BA%E6%A8%A1/" rel="tag">序列建模</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" rel="tag">数学基础</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" rel="tag">梯度下降</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%AD%A3%E5%88%99%E5%8C%96/" rel="tag">正则化</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" rel="tag">深度学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%82%BC%E4%B8%B9%E6%8A%80%E5%B7%A7/" rel="tag">炼丹技巧</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" rel="tag">神经网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" rel="tag">线性代数</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92/" rel="tag">线性回归</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%87%AA%E5%8A%A8%E6%B1%82%E5%AF%BC/" rel="tag">自动求导</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/" rel="tag">计算机视觉</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%BF%87%E6%8B%9F%E5%90%88/" rel="tag">过拟合</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%80%BB%E8%BE%91%E5%9B%9E%E5%BD%92/" rel="tag">逻辑回归</a></li></ul>
     </div>
   </div>
 
@@ -2929,7 +3067,7 @@ $$</p>
   <div class="widget-wrap">
     <h3 class="widget-title">标签云</h3>
     <div class="widget tagcloud">
-      <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0-%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C-%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0-ReLU/" style="font-size: 10px;">-机器学习 -深度学习 -神经网络 -激活函数 -ReLU</a> <a href="/tags/Adam/" style="font-size: 10px;">Adam</a> <a href="/tags/AdamW/" style="font-size: 10px;">AdamW</a> <a href="/tags/BatchNorm/" style="font-size: 10px;">BatchNorm</a> <a href="/tags/CNN/" style="font-size: 10px;">CNN</a> <a href="/tags/Dropout/" style="font-size: 10px;">Dropout</a> <a href="/tags/GPU%E5%8A%A0%E9%80%9F/" style="font-size: 10px;">GPU加速</a> <a href="/tags/NumPy/" style="font-size: 12.5px;">NumPy</a> <a href="/tags/PyTorch/" style="font-size: 10px;">PyTorch</a> <a href="/tags/Python/" style="font-size: 10px;">Python</a> <a href="/tags/SGD/" style="font-size: 10px;">SGD</a> <a href="/tags/Sigmoid/" style="font-size: 10px;">Sigmoid</a> <a href="/tags/scikit-learn/" style="font-size: 10px;">scikit-learn</a> <a href="/tags/%E4%BA%A4%E5%8F%89%E7%86%B5/" style="font-size: 10px;">交叉熵</a> <a href="/tags/%E4%BB%8E0%E5%BC%80%E5%A7%8B/" style="font-size: 10px;">从0开始</a> <a href="/tags/%E4%BC%98%E5%8C%96%E5%99%A8/" style="font-size: 10px;">优化器</a> <a href="/tags/%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" style="font-size: 10px;">优化方法</a> <a href="/tags/%E5%88%86%E7%B1%BB%E7%AE%97%E6%B3%95/" style="font-size: 10px;">分类算法</a> <a href="/tags/%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">卷积神经网络</a> <a href="/tags/%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD/" style="font-size: 10px;">反向传播</a> <a href="/tags/%E5%9B%BE%E5%83%8F%E5%88%86%E7%B1%BB/" style="font-size: 10px;">图像分类</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" style="font-size: 15px;">学习记录</a> <a href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" style="font-size: 12.5px;">数学基础</a> <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" style="font-size: 20px;">机器学习</a> <a href="/tags/%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" style="font-size: 12.5px;">梯度下降</a> <a href="/tags/%E6%AD%A3%E5%88%99%E5%8C%96/" style="font-size: 10px;">正则化</a> <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" style="font-size: 17.5px;">深度学习</a> <a href="/tags/%E7%82%BC%E4%B8%B9%E6%8A%80%E5%B7%A7/" style="font-size: 12.5px;">炼丹技巧</a> <a href="/tags/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">神经网络</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" style="font-size: 15px;">线性代数</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92/" style="font-size: 10px;">线性回归</a> <a href="/tags/%E8%87%AA%E5%8A%A8%E6%B1%82%E5%AF%BC/" style="font-size: 10px;">自动求导</a> <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/" style="font-size: 10px;">计算机视觉</a> <a href="/tags/%E8%BF%87%E6%8B%9F%E5%90%88/" style="font-size: 10px;">过拟合</a> <a href="/tags/%E9%80%BB%E8%BE%91%E5%9B%9E%E5%BD%92/" style="font-size: 10px;">逻辑回归</a>
+      <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0-%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C-%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0-ReLU/" style="font-size: 10px;">-机器学习 -深度学习 -神经网络 -激活函数 -ReLU</a> <a href="/tags/Adam/" style="font-size: 10px;">Adam</a> <a href="/tags/AdamW/" style="font-size: 10px;">AdamW</a> <a href="/tags/BatchNorm/" style="font-size: 10px;">BatchNorm</a> <a href="/tags/CNN/" style="font-size: 10px;">CNN</a> <a href="/tags/Dropout/" style="font-size: 10px;">Dropout</a> <a href="/tags/GPU%E5%8A%A0%E9%80%9F/" style="font-size: 10px;">GPU加速</a> <a href="/tags/LSTM/" style="font-size: 10px;">LSTM</a> <a href="/tags/NumPy/" style="font-size: 12.5px;">NumPy</a> <a href="/tags/PyTorch/" style="font-size: 12.5px;">PyTorch</a> <a href="/tags/Python/" style="font-size: 10px;">Python</a> <a href="/tags/RNN/" style="font-size: 10px;">RNN</a> <a href="/tags/SGD/" style="font-size: 10px;">SGD</a> <a href="/tags/Sigmoid/" style="font-size: 10px;">Sigmoid</a> <a href="/tags/scikit-learn/" style="font-size: 10px;">scikit-learn</a> <a href="/tags/%E4%BA%A4%E5%8F%89%E7%86%B5/" style="font-size: 10px;">交叉熵</a> <a href="/tags/%E4%BB%8E0%E5%BC%80%E5%A7%8B/" style="font-size: 10px;">从0开始</a> <a href="/tags/%E4%BC%98%E5%8C%96%E5%99%A8/" style="font-size: 10px;">优化器</a> <a href="/tags/%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" style="font-size: 10px;">优化方法</a> <a href="/tags/%E5%88%86%E7%B1%BB%E7%AE%97%E6%B3%95/" style="font-size: 10px;">分类算法</a> <a href="/tags/%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">卷积神经网络</a> <a href="/tags/%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD/" style="font-size: 10px;">反向传播</a> <a href="/tags/%E5%9B%BE%E5%83%8F%E5%88%86%E7%B1%BB/" style="font-size: 10px;">图像分类</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" style="font-size: 15px;">学习记录</a> <a href="/tags/%E5%BA%8F%E5%88%97%E5%BB%BA%E6%A8%A1/" style="font-size: 10px;">序列建模</a> <a href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" style="font-size: 12.5px;">数学基础</a> <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" style="font-size: 20px;">机器学习</a> <a href="/tags/%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" style="font-size: 12.5px;">梯度下降</a> <a href="/tags/%E6%AD%A3%E5%88%99%E5%8C%96/" style="font-size: 10px;">正则化</a> <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" style="font-size: 17.5px;">深度学习</a> <a href="/tags/%E7%82%BC%E4%B8%B9%E6%8A%80%E5%B7%A7/" style="font-size: 12.5px;">炼丹技巧</a> <a href="/tags/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">神经网络</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" style="font-size: 15px;">线性代数</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92/" style="font-size: 10px;">线性回归</a> <a href="/tags/%E8%87%AA%E5%8A%A8%E6%B1%82%E5%AF%BC/" style="font-size: 10px;">自动求导</a> <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/" style="font-size: 10px;">计算机视觉</a> <a href="/tags/%E8%BF%87%E6%8B%9F%E5%90%88/" style="font-size: 10px;">过拟合</a> <a href="/tags/%E9%80%BB%E8%BE%91%E5%9B%9E%E5%BD%92/" style="font-size: 10px;">逻辑回归</a>
     </div>
   </div>
 
@@ -2951,6 +3089,10 @@ $$</p>
       <ul>
         
           <li>
+            <a href="/2026/04/07/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%B8%89%EF%BC%89%EF%BC%9A%E5%BE%AA%E7%8E%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9CRNN%E4%B8%8ELSTM/">机器学习基础（十三）：循环神经网络RNN与LSTM</a>
+          </li>
+        
+          <li>
             <a href="/2026/04/06/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%BA%8C%EF%BC%89%EF%BC%9A%E4%BC%98%E5%8C%96%E5%99%A8%E5%A4%A7%E5%85%A8/">机器学习基础（十二）：优化器大全</a>
           </li>
         
@@ -2964,10 +3106,6 @@ $$</p>
         
           <li>
             <a href="/2026/04/02/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B9%9D%EF%BC%89%EF%BC%9APyTorch%E5%85%A5%E9%97%A8/">机器学习基础（九）：PyTorch入门</a>
-          </li>
-        
-          <li>
-            <a href="/2026/04/01/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%85%AB%EF%BC%89%EF%BC%9A%E9%80%BB%E8%BE%91%E5%9B%9E%E5%BD%92/">机器学习基础（八）：逻辑回归</a>
           </li>
         
       </ul>
