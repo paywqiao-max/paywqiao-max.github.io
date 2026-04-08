@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']],
+      packages: {'[+]': ['ams']}   // ⭐ 关键：启用 ams
+    }
+  };
+</script>
+
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <meta charset="utf-8">
+  
+  
+  <title>机器学习基础（十四）：Transformer与注意力机制 | 忤逆的学习笔记</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="一、引言 上一篇我们学习了 RNN 和 LSTM，它们通过循环结构处理序列数据。但 RNN 有一个根本性的瓶颈：  必须按顺序处理，无法并行  这导致训练长序列时效率极低。2017年，Google 发表论文《Attention Is All You Need》，提出了 Transformer 架构——完全基于注意力机制，彻底抛弃了循环结构。 本文目标：  理解注意力机制的直观原理 掌握 Self-">
+<meta property="og:type" content="article">
+<meta property="og:title" content="机器学习基础（十四）：Transformer与注意力机制">
+<meta property="og:url" content="https://paywqiao-max.github.io/2026/04/08/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E5%9B%9B%EF%BC%89%EF%BC%9ATransformer%E4%B8%8E%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6/index.html">
+<meta property="og:site_name" content="忤逆的学习笔记">
+<meta property="og:description" content="一、引言 上一篇我们学习了 RNN 和 LSTM，它们通过循环结构处理序列数据。但 RNN 有一个根本性的瓶颈：  必须按顺序处理，无法并行  这导致训练长序列时效率极低。2017年，Google 发表论文《Attention Is All You Need》，提出了 Transformer 架构——完全基于注意力机制，彻底抛弃了循环结构。 本文目标：  理解注意力机制的直观原理 掌握 Self-">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-04-08T14:30:00.000Z">
+<meta property="article:modified_time" content="2026-04-08T14:26:40.743Z">
+<meta property="article:author" content="忤逆">
+<meta property="article:tag" content="PyTorch">
+<meta property="article:tag" content="Self-Attention">
+<meta property="article:tag" content="Transformer">
+<meta property="article:tag" content="机器学习">
+<meta property="article:tag" content="注意力机制">
+<meta property="article:tag" content="深度学习">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="忤逆的学习笔记" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css">
+
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 8.1.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">忤逆的学习笔记</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS 订阅"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="搜索"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="搜索"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://paywqiao-max.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-机器学习基础（十四）：Transformer与注意力机制" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/04/08/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E5%9B%9B%EF%BC%89%EF%BC%9ATransformer%E4%B8%8E%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6/" class="article-date">
+  <time class="dt-published" datetime="2026-04-08T14:30:00.000Z" itemprop="datePublished">2026-04-08</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80/">机器学习基础</a>►<a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      机器学习基础（十四）：Transformer与注意力机制
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="一、引言">一、引言</h2>
+<p>上一篇我们学习了 RNN 和 LSTM，它们通过<strong>循环结构</strong>处理序列数据。但 RNN 有一个根本性的瓶颈：</p>
+<blockquote>
+<p><strong>必须按顺序处理，无法并行</strong></p>
+</blockquote>
+<p>这导致训练长序列时效率极低。2017年，Google 发表论文《Attention Is All You Need》，提出了 <strong>Transformer</strong> 架构——完全基于<strong>注意力机制</strong>，彻底抛弃了循环结构。</p>
+<p><strong>本文目标：</strong></p>
+<ul>
+<li>理解注意力机制的直观原理</li>
+<li>掌握 Self-Attention 的完整公式</li>
+<li>从零搭建 Transformer</li>
+<li>实现一个机器翻译模型</li>
+</ul>
+<hr>
+<h2 id="二、注意力机制的本质">二、注意力机制的本质</h2>
+<h3 id="2-1-直观理解">2.1 直观理解</h3>
+<p>想象你在读这句话：</p>
+<blockquote>
+<p>“小明把苹果给了小红，<strong>她</strong>很高兴。”</p>
+</blockquote>
+<p>读到&quot;她&quot;时，你的大脑会自动&quot;关注&quot;到&quot;小红&quot;——这就是注意力。</p>
+<p><strong>核心思想：</strong> 在处理序列的每个位置时，动态地决定应该&quot;看&quot;哪些其他位置。</p>
+<h3 id="2-2-查询-键-值（Query-Key-Value）">2.2 查询-键-值（Query-Key-Value）</h3>
+<p>注意力机制借鉴了数据库查询的思想：</p>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>类比</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Query</strong></td>
+<td>搜索关键词</td>
+<td>我想找什么？</td>
+</tr>
+<tr>
+<td><strong>Key</strong></td>
+<td>文档标签</td>
+<td>每个位置的内容是什么？</td>
+</tr>
+<tr>
+<td><strong>Value</strong></td>
+<td>文档内容</td>
+<td>实际要获取的信息</td>
+</tr>
+</tbody>
+</table>
+<p><strong>计算过程：</strong></p>
+<ol>
+<li>用 Query 和每个 Key 计算<strong>相似度</strong>（点积）</li>
+<li>用 softmax 转换为<strong>注意力权重</strong></li>
+<li>用权重对 Value 做<strong>加权求和</strong></li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 伪代码</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">attention</span>(<span class="params">query, keys, values</span>):</span><br><span class="line">    scores = query @ keys.T           <span class="comment"># 相似度：[1, seq_len]</span></span><br><span class="line">    weights = softmax(scores)         <span class="comment"># 注意力权重：[1, seq_len]</span></span><br><span class="line">    output = weights @ values         <span class="comment"># 加权求和：[1, dim]</span></span><br><span class="line">    <span class="keyword">return</span> output</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="三、Self-Attention-自注意力">三、Self-Attention 自注意力</h2>
+<h3 id="3-1-什么是自注意力？">3.1 什么是自注意力？</h3>
+<p><strong>Self-Attention</strong>：序列中的每个位置都关注序列中的<strong>所有位置</strong>（包括自己）。</p>
+<p>输入一个序列，输出同样长度的序列，每个输出都是对所有输入的加权组合。</p>
+<h3 id="3-2-完整公式推导">3.2 完整公式推导</h3>
+<p>给定输入序列 $X \in \mathbb{R}^{n \times d_{model}}$（$n$ 个词，每个 $d_{model}$ 维）</p>
+<p><strong>Step 1: 生成 Q/K/V</strong></p>
+<p>$$Q = XW^Q, \quad K = XW^K, \quad V = XW^V$$</p>
+<p>其中 $W^Q, W^K \in \mathbb{R}^{d_{model} \times d_k}$，$W^V \in \mathbb{R}^{d_{model} \times d_v}$</p>
+<p><strong>Step 2: 计算注意力分数</strong></p>
+<p>$$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$</p>
+<p><strong>为什么要除以 $\sqrt{d_k}$？</strong></p>
+<p>当 $d_k$ 很大时，点积的数值会很大，导致 softmax 进入梯度饱和区。除以 $\sqrt{d_k}$ 可以<strong>稳定梯度</strong>。</p>
+<h3 id="3-3-PyTorch-实现">3.3 PyTorch 实现</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> torch</span><br><span class="line"><span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn</span><br><span class="line"><span class="keyword">import</span> math</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">SelfAttention</span>(nn.Module):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, d_model=<span class="number">512</span></span>):</span><br><span class="line">        <span class="built_in">super</span>().__init__()</span><br><span class="line">        <span class="variable language_">self</span>.d_model = d_model</span><br><span class="line">        <span class="variable language_">self</span>.d_k = d_model  <span class="comment"># 简化：d_k = d_model</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 三个线性投影</span></span><br><span class="line">        <span class="variable language_">self</span>.W_q = nn.Linear(d_model, d_model)</span><br><span class="line">        <span class="variable language_">self</span>.W_k = nn.Linear(d_model, d_model)</span><br><span class="line">        <span class="variable language_">self</span>.W_v = nn.Linear(d_model, d_model)</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, x, mask=<span class="literal">None</span></span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">        x: [batch, seq_len, d_model]</span></span><br><span class="line"><span class="string">        mask: [batch, seq_len, seq_len] 用于遮挡未来信息</span></span><br><span class="line"><span class="string">        &quot;&quot;&quot;</span></span><br><span class="line">        batch, seq_len, _ = x.shape</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 生成 Q/K/V</span></span><br><span class="line">        Q = <span class="variable language_">self</span>.W_q(x)  <span class="comment"># [batch, seq_len, d_model]</span></span><br><span class="line">        K = <span class="variable language_">self</span>.W_k(x)</span><br><span class="line">        V = <span class="variable language_">self</span>.W_v(x)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 计算注意力分数: Q @ K^T</span></span><br><span class="line">        scores = torch.matmul(Q, K.transpose(-<span class="number">2</span>, -<span class="number">1</span>)) / math.sqrt(<span class="variable language_">self</span>.d_k)</span><br><span class="line">        <span class="comment"># [batch, seq_len, seq_len]</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 应用 mask（Decoder 中需要）</span></span><br><span class="line">        <span class="keyword">if</span> mask <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            scores = scores.masked_fill(mask == <span class="number">0</span>, <span class="built_in">float</span>(<span class="string">&#x27;-inf&#x27;</span>))</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># Softmax 得到注意力权重</span></span><br><span class="line">        attn_weights = torch.softmax(scores, dim=-<span class="number">1</span>)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 加权求和</span></span><br><span class="line">        output = torch.matmul(attn_weights, V)  <span class="comment"># [batch, seq_len, d_model]</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> output, attn_weights</span><br><span class="line"></span><br><span class="line"><span class="comment"># 测试</span></span><br><span class="line">x = torch.randn(<span class="number">2</span>, <span class="number">10</span>, <span class="number">512</span>)  <span class="comment"># batch=2, seq_len=10, d_model=512</span></span><br><span class="line">attn = SelfAttention()</span><br><span class="line">out, weights = attn(x)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;输入: <span class="subst">&#123;x.shape&#125;</span>&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;输出: <span class="subst">&#123;out.shape&#125;</span>&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;注意力权重: <span class="subst">&#123;weights.shape&#125;</span>&quot;</span>)  <span class="comment"># [2, 10, 10]</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="四、Multi-Head-Attention-多头注意力">四、Multi-Head Attention 多头注意力</h2>
+<h3 id="4-1-为什么需要多头？">4.1 为什么需要多头？</h3>
+<p>单个注意力可能只关注一种关系。多头允许模型<strong>同时关注不同方面的信息</strong>：</p>
+<ul>
+<li>一个头关注语法关系</li>
+<li>一个头关注语义关系</li>
+<li>一个头关注指代关系</li>
+</ul>
+<h3 id="4-2-多头机制">4.2 多头机制</h3>
+<p>将 Q/K/V 投影到 $h$ 个低维空间，分别做注意力，再拼接：</p>
+<p>$$\text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, …, \text{head}_h)W^O$$</p>
+<p>其中 $\text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)$</p>
+<h3 id="4-3-PyTorch-实现">4.3 PyTorch 实现</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MultiHeadAttention</span>(nn.Module):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, d_model=<span class="number">512</span>, num_heads=<span class="number">8</span></span>):</span><br><span class="line">        <span class="built_in">super</span>().__init__()</span><br><span class="line">        <span class="keyword">assert</span> d_model % num_heads == <span class="number">0</span>, <span class="string">&quot;d_model 必须能被 num_heads 整除&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="variable language_">self</span>.d_model = d_model</span><br><span class="line">        <span class="variable language_">self</span>.num_heads = num_heads</span><br><span class="line">        <span class="variable language_">self</span>.d_k = d_model // num_heads  <span class="comment"># 每个头的维度</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 线性投影</span></span><br><span class="line">        <span class="variable language_">self</span>.W_q = nn.Linear(d_model, d_model)</span><br><span class="line">        <span class="variable language_">self</span>.W_k = nn.Linear(d_model, d_model)</span><br><span class="line">        <span class="variable language_">self</span>.W_v = nn.Linear(d_model, d_model)</span><br><span class="line">        <span class="variable language_">self</span>.W_o = nn.Linear(d_model, d_model)</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, query, key, value, mask=<span class="literal">None</span></span>):</span><br><span class="line">        batch_size = query.size(<span class="number">0</span>)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 1. 线性投影并分头</span></span><br><span class="line">        <span class="comment"># [batch, seq, d_model] -&gt; [batch, seq, heads, d_k] -&gt; [batch, heads, seq, d_k]</span></span><br><span class="line">        Q = <span class="variable language_">self</span>.W_q(query).view(batch_size, -<span class="number">1</span>, <span class="variable language_">self</span>.num_heads, <span class="variable language_">self</span>.d_k).transpose(<span class="number">1</span>, <span class="number">2</span>)</span><br><span class="line">        K = <span class="variable language_">self</span>.W_k(key).view(batch_size, -<span class="number">1</span>, <span class="variable language_">self</span>.num_heads, <span class="variable language_">self</span>.d_k).transpose(<span class="number">1</span>, <span class="number">2</span>)</span><br><span class="line">        V = <span class="variable language_">self</span>.W_v(value).view(batch_size, -<span class="number">1</span>, <span class="variable language_">self</span>.num_heads, <span class="variable language_">self</span>.d_k).transpose(<span class="number">1</span>, <span class="number">2</span>)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 2. 计算注意力</span></span><br><span class="line">        scores = torch.matmul(Q, K.transpose(-<span class="number">2</span>, -<span class="number">1</span>)) / math.sqrt(<span class="variable language_">self</span>.d_k)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> mask <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            scores = scores.masked_fill(mask == <span class="number">0</span>, <span class="built_in">float</span>(<span class="string">&#x27;-inf&#x27;</span>))</span><br><span class="line">        </span><br><span class="line">        attn_weights = torch.softmax(scores, dim=-<span class="number">1</span>)</span><br><span class="line">        context = torch.matmul(attn_weights, V)  <span class="comment"># [batch, heads, seq, d_k]</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 3. 拼接并线性变换</span></span><br><span class="line">        context = context.transpose(<span class="number">1</span>, <span class="number">2</span>).contiguous().view(</span><br><span class="line">            batch_size, -<span class="number">1</span>, <span class="variable language_">self</span>.d_model</span><br><span class="line">        )</span><br><span class="line">        output = <span class="variable language_">self</span>.W_o(context)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> output, attn_weights</span><br><span class="line"></span><br><span class="line"><span class="comment"># 测试</span></span><br><span class="line">mha = MultiHeadAttention(d_model=<span class="number">512</span>, num_heads=<span class="number">8</span>)</span><br><span class="line">x = torch.randn(<span class="number">2</span>, <span class="number">10</span>, <span class="number">512</span>)</span><br><span class="line">out, weights = mha(x, x, x)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;多头注意力输出: <span class="subst">&#123;out.shape&#125;</span>&quot;</span>)  <span class="comment"># [2, 10, 512]</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;注意力权重: <span class="subst">&#123;weights.shape&#125;</span>&quot;</span>)  <span class="comment"># [2, 8, 10, 10]</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="五、Transformer-整体架构">五、Transformer 整体架构</h2>
+<h3 id="5-1-Encoder-Decoder-结构">5.1 Encoder-Decoder 结构</h3>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">┌─────────────────────────────────────────────────────────────┐</span><br><span class="line">│                        Transformer                          │</span><br><span class="line">├─────────────────────────────┬───────────────────────────────┤</span><br><span class="line">│          Encoder            │            Decoder            │</span><br><span class="line">│  ┌─────────────────────┐    │    ┌─────────────────────┐    │</span><br><span class="line">│  │  Input Embedding    │    │    │  Output Embedding   │    │</span><br><span class="line">│  │  + Positional Enc   │    │    │  + Positional Enc   │    │</span><br><span class="line">│  └──────────┬──────────┘    │    └──────────┬──────────┘    │</span><br><span class="line">│             ▼               │               ▼               │</span><br><span class="line">│  ┌─────────────────────┐    │    ┌─────────────────────┐    │</span><br><span class="line">│  │  Multi-Head Attn    │    │    │  Masked MHA         │    │</span><br><span class="line">│  │  + Add &amp; Norm       │    │    │  + Add &amp; Norm       │    │</span><br><span class="line">│  └──────────┬──────────┘    │    └──────────┬──────────┘    │</span><br><span class="line">│             ▼               │               ▼               │</span><br><span class="line">│  ┌─────────────────────┐    │    ┌─────────────────────┐    │</span><br><span class="line">│  │  Feed Forward       │    │    │  Multi-Head Attn    │    │</span><br><span class="line">│  │  + Add &amp; Norm       │    │    │  (Q from decoder,   │    │</span><br><span class="line">│  └──────────┬──────────┘    │    │   K/V from encoder) │    │</span><br><span class="line">│             │               │    │  + Add &amp; Norm       │    │</span><br><span class="line">│             │  (N×堆叠)     │    └──────────┬──────────┘    │</span><br><span class="line">│             ▼               │               ▼               │</span><br><span class="line">│  ┌─────────────────────┐    │    ┌─────────────────────┐    │</span><br><span class="line">│  │  Encoder Output     │───┐│    │  Feed Forward       │    │</span><br><span class="line">│  └─────────────────────┘   ││    │  + Add &amp; Norm       │    │</span><br><span class="line">│                            ││    └──────────┬──────────┘    │</span><br><span class="line">└────────────────────────────│┘               │               │</span><br><span class="line">                             │                │  (N×堆叠)      │</span><br><span class="line">                             │                ▼               │</span><br><span class="line">                             │    ┌─────────────────────┐     │</span><br><span class="line">                             │    │  Linear + Softmax   │     │</span><br><span class="line">                             │    │  -&gt; Output Prob     │     │</span><br><span class="line">                             │    └─────────────────────┘     │</span><br><span class="line">                             └────────────────────────────────┘</span><br></pre></td></tr></table></figure>
+<h3 id="5-2-组件详解">5.2 组件详解</h3>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Input Embedding</strong></td>
+<td>将词索引转为向量</td>
+</tr>
+<tr>
+<td><strong>Positional Encoding</strong></td>
+<td>注入位置信息（Transformer 本身没有顺序概念）</td>
+</tr>
+<tr>
+<td><strong>Multi-Head Attention</strong></td>
+<td>捕捉全局依赖关系</td>
+</tr>
+<tr>
+<td><strong>Add &amp; Norm</strong></td>
+<td>残差连接 + Layer Normalization</td>
+</tr>
+<tr>
+<td><strong>Feed Forward</strong></td>
+<td>两个线性层夹 ReLU：$\text{FFN}(x) = \max(0, xW_1 + b_1)W_2 + b_2$</td>
+</tr>
+<tr>
+<td><strong>Masked MHA</strong></td>
+<td>Decoder 中遮挡未来位置，防止偷看答案</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="六、位置编码（Positional-Encoding）">六、位置编码（Positional Encoding）</h2>
+<h3 id="6-1-为什么需要位置编码？">6.1 为什么需要位置编码？</h3>
+<p>Self-Attention 是<strong>位置无关</strong>的——打乱输入顺序，输出不变。但语言中顺序很重要！</p>
+<h3 id="6-2-正弦位置编码">6.2 正弦位置编码</h3>
+<p>Transformer 使用正弦/余弦函数生成位置编码：</p>
+<p>$$PE_{(pos, 2i)} = \sin\left(\frac{pos}{10000^{2i/d_{model}}}\right)$$<br>
+$$PE_{(pos, 2i+1)} = \cos\left(\frac{pos}{10000^{2i/d_{model}}}\right)$$</p>
+<p><strong>优点：</strong></p>
+<ul>
+<li>可以处理任意长度的序列</li>
+<li>相对位置可以线性表示：$PE_{pos+k}$ 可以用 $PE_{pos}$ 线性表示</li>
+</ul>
+<h3 id="6-3-PyTorch-实现">6.3 PyTorch 实现</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">PositionalEncoding</span>(nn.Module):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, d_model, max_len=<span class="number">5000</span></span>):</span><br><span class="line">        <span class="built_in">super</span>().__init__()</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 创建位置编码矩阵 [max_len, d_model]</span></span><br><span class="line">        pe = torch.zeros(max_len, d_model)</span><br><span class="line">        position = torch.arange(<span class="number">0</span>, max_len, dtype=torch.<span class="built_in">float</span>).unsqueeze(<span class="number">1</span>)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 分母项</span></span><br><span class="line">        div_term = torch.exp(</span><br><span class="line">            torch.arange(<span class="number">0</span>, d_model, <span class="number">2</span>).<span class="built_in">float</span>() * </span><br><span class="line">            (-math.log(<span class="number">10000.0</span>) / d_model)</span><br><span class="line">        )</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 正弦和余弦</span></span><br><span class="line">        pe[:, <span class="number">0</span>::<span class="number">2</span>] = torch.sin(position * div_term)</span><br><span class="line">        pe[:, <span class="number">1</span>::<span class="number">2</span>] = torch.cos(position * div_term)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 注册为 buffer（不参与训练）</span></span><br><span class="line">        <span class="variable language_">self</span>.register_buffer(<span class="string">&#x27;pe&#x27;</span>, pe.unsqueeze(<span class="number">0</span>))</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, x</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">        x: [batch, seq_len, d_model]</span></span><br><span class="line"><span class="string">        &quot;&quot;&quot;</span></span><br><span class="line">        <span class="keyword">return</span> x + <span class="variable language_">self</span>.pe[:, :x.size(<span class="number">1</span>), :]</span><br><span class="line"></span><br><span class="line"><span class="comment"># 测试</span></span><br><span class="line">pe = PositionalEncoding(d_model=<span class="number">512</span>)</span><br><span class="line">x = torch.randn(<span class="number">2</span>, <span class="number">10</span>, <span class="number">512</span>)</span><br><span class="line">out = pe(x)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;位置编码后: <span class="subst">&#123;out.shape&#125;</span>&quot;</span>)</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="七、Layer-Norm-残差连接">七、Layer Norm &amp; 残差连接</h2>
+<h3 id="7-1-残差连接（Residual-Connection）">7.1 残差连接（Residual Connection）</h3>
+<p>$$\text{Output} = \text{Layer}(x) + x$$</p>
+<p>解决深层网络的<strong>梯度消失</strong>问题，允许训练更深的网络。</p>
+<h3 id="7-2-Layer-Normalization">7.2 Layer Normalization</h3>
+<p>对每个样本的所有特征做归一化：</p>
+<p>$$\text{LayerNorm}(x) = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta$$</p>
+<p>与 BatchNorm 不同，LayerNorm 在<strong>序列维度</strong>上归一化，更适合变长序列。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">TransformerBlock</span>(nn.Module):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, d_model=<span class="number">512</span>, num_heads=<span class="number">8</span>, d_ff=<span class="number">2048</span>, dropout=<span class="number">0.1</span></span>):</span><br><span class="line">        <span class="built_in">super</span>().__init__()</span><br><span class="line">        </span><br><span class="line">        <span class="variable language_">self</span>.attention = MultiHeadAttention(d_model, num_heads)</span><br><span class="line">        <span class="variable language_">self</span>.feed_forward = nn.Sequential(</span><br><span class="line">            nn.Linear(d_model, d_ff),</span><br><span class="line">            nn.ReLU(),</span><br><span class="line">            nn.Dropout(dropout),</span><br><span class="line">            nn.Linear(d_ff, d_model)</span><br><span class="line">        )</span><br><span class="line">        </span><br><span class="line">        <span class="variable language_">self</span>.norm1 = nn.LayerNorm(d_model)</span><br><span class="line">        <span class="variable language_">self</span>.norm2 = nn.LayerNorm(d_model)</span><br><span class="line">        <span class="variable language_">self</span>.dropout = nn.Dropout(dropout)</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, x, mask=<span class="literal">None</span></span>):</span><br><span class="line">        <span class="comment"># 自注意力 + 残差 + LayerNorm</span></span><br><span class="line">        attn_out, _ = <span class="variable language_">self</span>.attention(x, x, x, mask)</span><br><span class="line">        x = <span class="variable language_">self</span>.norm1(x + <span class="variable language_">self</span>.dropout(attn_out))</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 前馈 + 残差 + LayerNorm</span></span><br><span class="line">        ff_out = <span class="variable language_">self</span>.feed_forward(x)</span><br><span class="line">        x = <span class="variable language_">self</span>.norm2(x + <span class="variable language_">self</span>.dropout(ff_out))</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> x</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="八、Transformer-vs-RNN">八、Transformer vs RNN</h2>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>RNN/LSTM</th>
+<th>Transformer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>并行性</strong></td>
+<td>❌ 顺序处理</td>
+<td>✅ 完全并行</td>
+</tr>
+<tr>
+<td><strong>长距离依赖</strong></td>
+<td>❌ 梯度消失</td>
+<td>✅ 直接连接</td>
+</tr>
+<tr>
+<td><strong>计算复杂度</strong></td>
+<td>$O(n)$</td>
+<td>$O(n^2)$（注意力矩阵）</td>
+</tr>
+<tr>
+<td><strong>位置信息</strong></td>
+<td>天然有序</td>
+<td>需要位置编码</td>
+</tr>
+<tr>
+<td><strong>训练速度</strong></td>
+<td>慢</td>
+<td>快（可并行）</td>
+</tr>
+<tr>
+<td><strong>显存占用</strong></td>
+<td>低</td>
+<td>高（注意力矩阵）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键突破：</strong> Transformer 用 $O(n^2)$ 的计算换取了<strong>完全并行</strong>和<strong>直接长距离依赖</strong>。</p>
+<hr>
+<h2 id="九、完整-Transformer-实现">九、完整 Transformer 实现</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Transformer</span>(nn.Module):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params"></span></span><br><span class="line"><span class="params">        self,</span></span><br><span class="line"><span class="params">        src_vocab_size,</span></span><br><span class="line"><span class="params">        tgt_vocab_size,</span></span><br><span class="line"><span class="params">        d_model=<span class="number">512</span>,</span></span><br><span class="line"><span class="params">        num_heads=<span class="number">8</span>,</span></span><br><span class="line"><span class="params">        num_encoder_layers=<span class="number">6</span>,</span></span><br><span class="line"><span class="params">        num_decoder_layers=<span class="number">6</span>,</span></span><br><span class="line"><span class="params">        d_ff=<span class="number">2048</span>,</span></span><br><span class="line"><span class="params">        max_len=<span class="number">5000</span>,</span></span><br><span class="line"><span class="params">        dropout=<span class="number">0.1</span></span></span><br><span class="line"><span class="params">    </span>):</span><br><span class="line">        <span class="built_in">super</span>().__init__()</span><br><span class="line">        </span><br><span class="line">        <span class="variable language_">self</span>.d_model = d_model</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># Embedding + Positional Encoding</span></span><br><span class="line">        <span class="variable language_">self</span>.src_embedding = nn.Embedding(src_vocab_size, d_model)</span><br><span class="line">        <span class="variable language_">self</span>.tgt_embedding = nn.Embedding(tgt_vocab_size, d_model)</span><br><span class="line">        <span class="variable language_">self</span>.pos_encoding = PositionalEncoding(d_model, max_len)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># Encoder</span></span><br><span class="line">        <span class="variable language_">self</span>.encoder_layers = nn.ModuleList([</span><br><span class="line">            TransformerBlock(d_model, num_heads, d_ff, dropout)</span><br><span class="line">            <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(num_encoder_layers)</span><br><span class="line">        ])</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># Decoder</span></span><br><span class="line">        <span class="variable language_">self</span>.decoder_layers = nn.ModuleList([</span><br><span class="line">            DecoderBlock(d_model, num_heads, d_ff, dropout)</span><br><span class="line">            <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(num_decoder_layers)</span><br><span class="line">        ])</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 输出层</span></span><br><span class="line">        <span class="variable language_">self</span>.output_layer = nn.Linear(d_model, tgt_vocab_size)</span><br><span class="line">        <span class="variable language_">self</span>.dropout = nn.Dropout(dropout)</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">encode</span>(<span class="params">self, src, src_mask=<span class="literal">None</span></span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;编码器前向传播&quot;&quot;&quot;</span></span><br><span class="line">        x = <span class="variable language_">self</span>.src_embedding(src) * math.sqrt(<span class="variable language_">self</span>.d_model)</span><br><span class="line">        x = <span class="variable language_">self</span>.pos_encoding(x)</span><br><span class="line">        x = <span class="variable language_">self</span>.dropout(x)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">for</span> layer <span class="keyword">in</span> <span class="variable language_">self</span>.encoder_layers:</span><br><span class="line">            x = layer(x, src_mask)</span><br><span class="line">        <span class="keyword">return</span> x</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">decode</span>(<span class="params">self, tgt, memory, src_mask=<span class="literal">None</span>, tgt_mask=<span class="literal">None</span></span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;解码器前向传播&quot;&quot;&quot;</span></span><br><span class="line">        x = <span class="variable language_">self</span>.tgt_embedding(tgt) * math.sqrt(<span class="variable language_">self</span>.d_model)</span><br><span class="line">        x = <span class="variable language_">self</span>.pos_encoding(x)</span><br><span class="line">        x = <span class="variable language_">self</span>.dropout(x)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">for</span> layer <span class="keyword">in</span> <span class="variable language_">self</span>.decoder_layers:</span><br><span class="line">            x = layer(x, memory, src_mask, tgt_mask)</span><br><span class="line">        <span class="keyword">return</span> x</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, src, tgt, src_mask=<span class="literal">None</span>, tgt_mask=<span class="literal">None</span></span>):</span><br><span class="line">        memory = <span class="variable language_">self</span>.encode(src, src_mask)</span><br><span class="line">        output = <span class="variable language_">self</span>.decode(tgt, memory, src_mask, tgt_mask)</span><br><span class="line">        <span class="keyword">return</span> <span class="variable language_">self</span>.output_layer(output)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">DecoderBlock</span>(nn.Module):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;带 Masked MHA 和 Cross-Attention 的解码器块&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, d_model=<span class="number">512</span>, num_heads=<span class="number">8</span>, d_ff=<span class="number">2048</span>, dropout=<span class="number">0.1</span></span>):</span><br><span class="line">        <span class="built_in">super</span>().__init__()</span><br><span class="line">        </span><br><span class="line">        <span class="variable language_">self</span>.masked_attn = MultiHeadAttention(d_model, num_heads)</span><br><span class="line">        <span class="variable language_">self</span>.cross_attn = MultiHeadAttention(d_model, num_heads)</span><br><span class="line">        <span class="variable language_">self</span>.feed_forward = nn.Sequential(</span><br><span class="line">            nn.Linear(d_model, d_ff),</span><br><span class="line">            nn.ReLU(),</span><br><span class="line">            nn.Dropout(dropout),</span><br><span class="line">            nn.Linear(d_ff, d_model)</span><br><span class="line">        )</span><br><span class="line">        </span><br><span class="line">        <span class="variable language_">self</span>.norm1 = nn.LayerNorm(d_model)</span><br><span class="line">        <span class="variable language_">self</span>.norm2 = nn.LayerNorm(d_model)</span><br><span class="line">        <span class="variable language_">self</span>.norm3 = nn.LayerNorm(d_model)</span><br><span class="line">        <span class="variable language_">self</span>.dropout = nn.Dropout(dropout)</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, x, memory, src_mask=<span class="literal">None</span>, tgt_mask=<span class="literal">None</span></span>):</span><br><span class="line">        <span class="comment"># Masked Self-Attention</span></span><br><span class="line">        attn_out, _ = <span class="variable language_">self</span>.masked_attn(x, x, x, tgt_mask)</span><br><span class="line">        x = <span class="variable language_">self</span>.norm1(x + <span class="variable language_">self</span>.dropout(attn_out))</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># Cross-Attention (Q from decoder, K/V from encoder)</span></span><br><span class="line">        attn_out, _ = <span class="variable language_">self</span>.cross_attn(x, memory, memory, src_mask)</span><br><span class="line">        x = <span class="variable language_">self</span>.norm2(x + <span class="variable language_">self</span>.dropout(attn_out))</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># Feed Forward</span></span><br><span class="line">        ff_out = <span class="variable language_">self</span>.feed_forward(x)</span><br><span class="line">        x = <span class="variable language_">self</span>.norm3(x + <span class="variable language_">self</span>.dropout(ff_out))</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> x</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">create_look_ahead_mask</span>(<span class="params">size</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;创建上三角 mask，防止看到未来信息&quot;&quot;&quot;</span></span><br><span class="line">    mask = torch.triu(torch.ones(size, size), diagonal=<span class="number">1</span>)</span><br><span class="line">    <span class="keyword">return</span> mask == <span class="number">0</span>  <span class="comment"># 下三角为 True</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 测试</span></span><br><span class="line">src_vocab_size = <span class="number">10000</span></span><br><span class="line">tgt_vocab_size = <span class="number">10000</span></span><br><span class="line">model = Transformer(src_vocab_size, tgt_vocab_size)</span><br><span class="line"></span><br><span class="line">src = torch.randint(<span class="number">0</span>, src_vocab_size, (<span class="number">2</span>, <span class="number">20</span>))  <span class="comment"># [batch, src_len]</span></span><br><span class="line">tgt = torch.randint(<span class="number">0</span>, tgt_vocab_size, (<span class="number">2</span>, <span class="number">15</span>))  <span class="comment"># [batch, tgt_len]</span></span><br><span class="line">tgt_mask = create_look_ahead_mask(<span class="number">15</span>).unsqueeze(<span class="number">0</span>).unsqueeze(<span class="number">0</span>)  <span class="comment"># [1, 1, 15, 15]</span></span><br><span class="line"></span><br><span class="line">output = model(src, tgt, tgt_mask=tgt_mask)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;Transformer 输出: <span class="subst">&#123;output.shape&#125;</span>&quot;</span>)  <span class="comment"># [2, 15, tgt_vocab_size]</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="十、实战：机器翻译">十、实战：机器翻译</h2>
+<h3 id="10-1-数据准备（使用-torchtext）">10.1 数据准备（使用 torchtext）</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> torch</span><br><span class="line"><span class="keyword">from</span> torch.utils.data <span class="keyword">import</span> DataLoader</span><br><span class="line"><span class="keyword">from</span> torch.nn.utils.rnn <span class="keyword">import</span> pad_sequence</span><br><span class="line"></span><br><span class="line"><span class="comment"># 简化的词表类</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Vocab</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="variable language_">self</span>.word2idx = &#123;<span class="string">&#x27;&lt;pad&gt;&#x27;</span>: <span class="number">0</span>, <span class="string">&#x27;&lt;sos&gt;&#x27;</span>: <span class="number">1</span>, <span class="string">&#x27;&lt;eos&gt;&#x27;</span>: <span class="number">2</span>, <span class="string">&#x27;&lt;unk&gt;&#x27;</span>: <span class="number">3</span>&#125;</span><br><span class="line">        <span class="variable language_">self</span>.idx2word = &#123;<span class="number">0</span>: <span class="string">&#x27;&lt;pad&gt;&#x27;</span>, <span class="number">1</span>: <span class="string">&#x27;&lt;sos&gt;&#x27;</span>, <span class="number">2</span>: <span class="string">&#x27;&lt;eos&gt;&#x27;</span>, <span class="number">3</span>: <span class="string">&#x27;&lt;unk&gt;&#x27;</span>&#125;</span><br><span class="line">        <span class="variable language_">self</span>.count = <span class="number">4</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">build_vocab</span>(<span class="params">self, sentences, min_freq=<span class="number">2</span></span>):</span><br><span class="line">        <span class="keyword">from</span> collections <span class="keyword">import</span> Counter</span><br><span class="line">        counter = Counter()</span><br><span class="line">        <span class="keyword">for</span> sent <span class="keyword">in</span> sentences:</span><br><span class="line">            counter.update(sent.split())</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">for</span> word, freq <span class="keyword">in</span> counter.items():</span><br><span class="line">            <span class="keyword">if</span> freq &gt;= min_freq <span class="keyword">and</span> word <span class="keyword">not</span> <span class="keyword">in</span> <span class="variable language_">self</span>.word2idx:</span><br><span class="line">                <span class="variable language_">self</span>.word2idx[word] = <span class="variable language_">self</span>.count</span><br><span class="line">                <span class="variable language_">self</span>.idx2word[<span class="variable language_">self</span>.count] = word</span><br><span class="line">                <span class="variable language_">self</span>.count += <span class="number">1</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">encode</span>(<span class="params">self, sentence</span>):</span><br><span class="line">        tokens = [<span class="string">&#x27;&lt;sos&gt;&#x27;</span>] + sentence.split() + [<span class="string">&#x27;&lt;eos&gt;&#x27;</span>]</span><br><span class="line">        <span class="keyword">return</span> [<span class="variable language_">self</span>.word2idx.get(t, <span class="number">3</span>) <span class="keyword">for</span> t <span class="keyword">in</span> tokens]</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">decode</span>(<span class="params">self, indices</span>):</span><br><span class="line">        words = [<span class="variable language_">self</span>.idx2word.get(i, <span class="string">&#x27;&lt;unk&gt;&#x27;</span>) <span class="keyword">for</span> i <span class="keyword">in</span> indices]</span><br><span class="line">        <span class="keyword">return</span> <span class="string">&#x27; &#x27;</span>.join(words)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 示例数据（实际使用 WMT14 等数据集）</span></span><br><span class="line">src_sentences = [</span><br><span class="line">    <span class="string">&quot;hello world&quot;</span>,</span><br><span class="line">    <span class="string">&quot;how are you&quot;</span>,</span><br><span class="line">    <span class="string">&quot;i love machine learning&quot;</span>,</span><br><span class="line">    <span class="string">&quot;transformer is powerful&quot;</span>,</span><br><span class="line">    <span class="string">&quot;attention is all you need&quot;</span></span><br><span class="line">]</span><br><span class="line"></span><br><span class="line">tgt_sentences = [</span><br><span class="line">    <span class="string">&quot;你好 世界&quot;</span>,</span><br><span class="line">    <span class="string">&quot;你 好吗&quot;</span>,</span><br><span class="line">    <span class="string">&quot;我 喜欢 机器 学习&quot;</span>,</span><br><span class="line">    <span class="string">&quot;transformer 很 强大&quot;</span>,</span><br><span class="line">    <span class="string">&quot;注意力 就是 你 需要 的 一切&quot;</span></span><br><span class="line">]</span><br><span class="line"></span><br><span class="line"><span class="comment"># 构建词表</span></span><br><span class="line">src_vocab = Vocab()</span><br><span class="line">tgt_vocab = Vocab()</span><br><span class="line">src_vocab.build_vocab(src_sentences)</span><br><span class="line">tgt_vocab.build_vocab(tgt_sentences)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;源语言词表大小: <span class="subst">&#123;<span class="built_in">len</span>(src_vocab.word2idx)&#125;</span>&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;目标语言词表大小: <span class="subst">&#123;<span class="built_in">len</span>(tgt_vocab.word2idx)&#125;</span>&quot;</span>)</span><br></pre></td></tr></table></figure>
+<h3 id="10-2-训练循环">10.2 训练循环</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">train_epoch</span>(<span class="params">model, dataloader, optimizer, criterion, device</span>):</span><br><span class="line">    model.train()</span><br><span class="line">    total_loss = <span class="number">0</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> src, tgt <span class="keyword">in</span> dataloader:</span><br><span class="line">        src, tgt = src.to(device), tgt.to(device)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># tgt_input: 去掉最后一个词（输入）</span></span><br><span class="line">        <span class="comment"># tgt_label: 去掉第一个词（目标）</span></span><br><span class="line">        tgt_input = tgt[:, :-<span class="number">1</span>]</span><br><span class="line">        tgt_label = tgt[:, <span class="number">1</span>:]</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 创建 mask</span></span><br><span class="line">        tgt_mask = create_look_ahead_mask(tgt_input.size(<span class="number">1</span>)).to(device)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 前向传播</span></span><br><span class="line">        optimizer.zero_grad()</span><br><span class="line">        output = model(src, tgt_input, tgt_mask=tgt_mask)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 计算损失（忽略 &lt;pad&gt;）</span></span><br><span class="line">        output = output.view(-<span class="number">1</span>, output.size(-<span class="number">1</span>))</span><br><span class="line">        tgt_label = tgt_label.contiguous().view(-<span class="number">1</span>)</span><br><span class="line">        </span><br><span class="line">        loss = criterion(output, tgt_label)</span><br><span class="line">        loss.backward()</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 梯度裁剪</span></span><br><span class="line">        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=<span class="number">1.0</span>)</span><br><span class="line">        </span><br><span class="line">        optimizer.step()</span><br><span class="line">        total_loss += loss.item()</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> total_loss / <span class="built_in">len</span>(dataloader)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">translate</span>(<span class="params">model, src_sentence, src_vocab, tgt_vocab, device, max_len=<span class="number">50</span></span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;贪心解码进行翻译&quot;&quot;&quot;</span></span><br><span class="line">    model.<span class="built_in">eval</span>()</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 编码源句子</span></span><br><span class="line">    src = torch.tensor([src_vocab.encode(src_sentence)]).to(device)</span><br><span class="line">    memory = model.encode(src)</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 自回归生成</span></span><br><span class="line">    tgt_indices = [<span class="number">1</span>]  <span class="comment"># &lt;sos&gt;</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">with</span> torch.no_grad():</span><br><span class="line">        <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(max_len):</span><br><span class="line">            tgt = torch.tensor([tgt_indices]).to(device)</span><br><span class="line">            tgt_mask = create_look_ahead_mask(<span class="built_in">len</span>(tgt_indices)).to(device)</span><br><span class="line">            </span><br><span class="line">            output = model.decode(tgt, memory, tgt_mask=tgt_mask)</span><br><span class="line">            output = model.output_layer(output)</span><br><span class="line">            </span><br><span class="line">            <span class="comment"># 取最后一个位置的预测</span></span><br><span class="line">            next_token = output[<span class="number">0</span>, -<span class="number">1</span>].argmax().item()</span><br><span class="line">            tgt_indices.append(next_token)</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">if</span> next_token == <span class="number">2</span>:  <span class="comment"># &lt;eos&gt;</span></span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> tgt_vocab.decode(tgt_indices)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 完整训练示例</span></span><br><span class="line">device = torch.device(<span class="string">&#x27;cuda&#x27;</span> <span class="keyword">if</span> torch.cuda.is_available() <span class="keyword">else</span> <span class="string">&#x27;cpu&#x27;</span>)</span><br><span class="line"></span><br><span class="line">model = Transformer(</span><br><span class="line">    src_vocab_size=<span class="built_in">len</span>(src_vocab.word2idx),</span><br><span class="line">    tgt_vocab_size=<span class="built_in">len</span>(tgt_vocab.word2idx),</span><br><span class="line">    d_model=<span class="number">256</span>,</span><br><span class="line">    num_heads=<span class="number">4</span>,</span><br><span class="line">    num_encoder_layers=<span class="number">2</span>,</span><br><span class="line">    num_decoder_layers=<span class="number">2</span>,</span><br><span class="line">    d_ff=<span class="number">512</span></span><br><span class="line">).to(device)</span><br><span class="line"></span><br><span class="line">optimizer = torch.optim.Adam(model.parameters(), lr=<span class="number">1e-4</span>, betas=(<span class="number">0.9</span>, <span class="number">0.98</span>), eps=<span class="number">1e-9</span>)</span><br><span class="line">criterion = nn.CrossEntropyLoss(ignore_index=<span class="number">0</span>)  <span class="comment"># 忽略 &lt;pad&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 准备数据</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">collate_fn</span>(<span class="params">batch</span>):</span><br><span class="line">    src, tgt = <span class="built_in">zip</span>(*batch)</span><br><span class="line">    src = pad_sequence([torch.tensor(s) <span class="keyword">for</span> s <span class="keyword">in</span> src], batch_first=<span class="literal">True</span>, padding_value=<span class="number">0</span>)</span><br><span class="line">    tgt = pad_sequence([torch.tensor(t) <span class="keyword">for</span> t <span class="keyword">in</span> tgt], batch_first=<span class="literal">True</span>, padding_value=<span class="number">0</span>)</span><br><span class="line">    <span class="keyword">return</span> src, tgt</span><br><span class="line"></span><br><span class="line">data = [(src_vocab.encode(s), tgt_vocab.encode(t)) </span><br><span class="line">        <span class="keyword">for</span> s, t <span class="keyword">in</span> <span class="built_in">zip</span>(src_sentences, tgt_sentences)]</span><br><span class="line">dataloader = DataLoader(data, batch_size=<span class="number">2</span>, shuffle=<span class="literal">True</span>, collate_fn=collate_fn)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 训练</span></span><br><span class="line"><span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">100</span>):</span><br><span class="line">    loss = train_epoch(model, dataloader, optimizer, criterion, device)</span><br><span class="line">    <span class="keyword">if</span> (epoch + <span class="number">1</span>) % <span class="number">20</span> == <span class="number">0</span>:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;Epoch <span class="subst">&#123;epoch+<span class="number">1</span>&#125;</span>, Loss: <span class="subst">&#123;loss:<span class="number">.4</span>f&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 测试翻译</span></span><br><span class="line">test_sentence = <span class="string">&quot;hello world&quot;</span></span><br><span class="line">translation = translate(model, test_sentence, src_vocab, tgt_vocab, device)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;\n翻译结果:&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;英文: <span class="subst">&#123;test_sentence&#125;</span>&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;中文: <span class="subst">&#123;translation&#125;</span>&quot;</span>)</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="十一、Transformer-的变体与应用">十一、Transformer 的变体与应用</h2>
+<h3 id="11-1-经典变体">11.1 经典变体</h3>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>结构</th>
+<th>特点</th>
+<th>应用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>BERT</strong></td>
+<td>Encoder-only</td>
+<td>双向注意力，预训练 + 微调</td>
+<td>文本分类、NER、问答</td>
+</tr>
+<tr>
+<td><strong>GPT</strong></td>
+<td>Decoder-only</td>
+<td>自回归生成</td>
+<td>文本生成、对话</td>
+</tr>
+<tr>
+<td><strong>T5</strong></td>
+<td>Encoder-Decoder</td>
+<td>统一文本到文本框架</td>
+<td>翻译、摘要、问答</td>
+</tr>
+<tr>
+<td><strong>Vision Transformer</strong></td>
+<td>Encoder-only</td>
+<td>图像分块作为序列</td>
+<td>图像分类</td>
+</tr>
+</tbody>
+</table>
+<h3 id="11-2-注意力可视化">11.2 注意力可视化</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">visualize_attention</span>(<span class="params">attention_weights, src_tokens, tgt_tokens</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">    可视化注意力权重</span></span><br><span class="line"><span class="string">    attention_weights: [num_heads, tgt_len, src_len]</span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line">    </span><br><span class="line">    fig, axes = plt.subplots(<span class="number">2</span>, <span class="number">4</span>, figsize=(<span class="number">16</span>, <span class="number">8</span>))</span><br><span class="line">    axes = axes.flatten()</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> i, ax <span class="keyword">in</span> <span class="built_in">enumerate</span>(axes):</span><br><span class="line">        <span class="keyword">if</span> i &lt; attention_weights.size(<span class="number">0</span>):</span><br><span class="line">            attn = attention_weights[i].cpu().detach().numpy()</span><br><span class="line">            im = ax.imshow(attn, cmap=<span class="string">&#x27;viridis&#x27;</span>, aspect=<span class="string">&#x27;auto&#x27;</span>)</span><br><span class="line">            ax.set_title(<span class="string">f&#x27;Head <span class="subst">&#123;i+<span class="number">1</span>&#125;</span>&#x27;</span>)</span><br><span class="line">            ax.set_xticks(<span class="built_in">range</span>(<span class="built_in">len</span>(src_tokens)))</span><br><span class="line">            ax.set_yticks(<span class="built_in">range</span>(<span class="built_in">len</span>(tgt_tokens)))</span><br><span class="line">            ax.set_xticklabels(src_tokens, rotation=<span class="number">90</span>)</span><br><span class="line">            ax.set_yticklabels(tgt_tokens)</span><br><span class="line">            plt.colorbar(im, ax=ax)</span><br><span class="line">    </span><br><span class="line">    plt.tight_layout()</span><br><span class="line">    plt.savefig(<span class="string">&#x27;attention_visualization.png&#x27;</span>, dpi=<span class="number">150</span>)</span><br><span class="line">    plt.show()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用示例</span></span><br><span class="line"><span class="comment"># visualize_attention(attn_weights[0], src_words, tgt_words)</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="十二、总结">十二、总结</h2>
+<h3 id="12-1-核心要点">12.1 核心要点</h3>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">Transformer</span><br><span class="line">├── 注意力机制</span><br><span class="line">│   ├── Self-Attention: 序列内部的全局依赖</span><br><span class="line">│   ├── Multi-Head: 多视角并行关注</span><br><span class="line">│   └── Scaled Dot-Product: QK^T / sqrt(d_k)</span><br><span class="line">├── 架构设计</span><br><span class="line">│   ├── Encoder: 双向理解</span><br><span class="line">│   ├── Decoder: 自回归生成</span><br><span class="line">│   └── Cross-Attention: 源目标信息融合</span><br><span class="line">├── 关键技巧</span><br><span class="line">│   ├── Positional Encoding: 注入位置信息</span><br><span class="line">│   ├── Residual Connection: 缓解梯度消失</span><br><span class="line">│   └── Layer Normalization: 稳定训练</span><br><span class="line">└── 优势</span><br><span class="line">    ├── 完全并行: 训练速度快</span><br><span class="line">    └── 长距离依赖: 直接连接</span><br></pre></td></tr></table></figure>
+<h3 id="12-2-学习路径回顾">12.2 学习路径回顾</h3>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">机器学习基础系列</span><br><span class="line">├── (一) 绪论</span><br><span class="line">├── (二) 线性回归</span><br><span class="line">├── (三) 逻辑回归</span><br><span class="line">├── (四) 决策树</span><br><span class="line">├── (五) 集成学习</span><br><span class="line">├── (六) 支持向量机</span><br><span class="line">├── (七) 聚类</span><br><span class="line">├── (八) 降维</span><br><span class="line">├── (九) PyTorch入门</span><br><span class="line">├── (十) 卷积神经网络CNN</span><br><span class="line">├── (十一) 过拟合与正则化</span><br><span class="line">├── (十二) 优化器大全</span><br><span class="line">├── (十三) 循环神经网络RNN与LSTM</span><br><span class="line">└── (十四) Transformer与注意力机制 ← 你在这里</span><br><span class="line">    └── 下一步: BERT/GPT预训练模型</span><br></pre></td></tr></table></figure>
+<h3 id="12-3-下一步学习建议">12.3 下一步学习建议</h3>
+<ol>
+<li><strong>深入理解 BERT</strong>：双向编码器的预训练与微调</li>
+<li><strong>探索 GPT 系列</strong>：自回归语言模型的演进</li>
+<li><strong>Vision Transformer</strong>：注意力在 CV 领域的应用</li>
+<li><strong>高效 Transformer</strong>：稀疏注意力、线性注意力等优化</li>
+</ol>
+<hr>
+<h2 id="附录：Self-Attention-速查表">附录：Self-Attention 速查表</h2>
+<table>
+<thead>
+<tr>
+<th>符号</th>
+<th>含义</th>
+<th>维度</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$X$</td>
+<td>输入序列</td>
+<td>$[n, d_{model}]$</td>
+</tr>
+<tr>
+<td>$Q$</td>
+<td>Query 矩阵</td>
+<td>$[n, d_k]$</td>
+</tr>
+<tr>
+<td>$K$</td>
+<td>Key 矩阵</td>
+<td>$[n, d_k]$</td>
+</tr>
+<tr>
+<td>$V$</td>
+<td>Value 矩阵</td>
+<td>$[n, d_v]$</td>
+</tr>
+<tr>
+<td>$W^Q, W^K, W^V$</td>
+<td>投影矩阵</td>
+<td>学习参数</td>
+</tr>
+<tr>
+<td>$\text{Attention}$</td>
+<td>注意力输出</td>
+<td>$[n, d_v]$</td>
+</tr>
+</tbody>
+</table>
+<p><strong>核心公式：</strong></p>
+<p>$$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$</p>
+<hr>
+<p><em>本文代码可在 GitHub 获取：<a target="_blank" rel="noopener" href="https://github.com/paywqiao-max/ML-Basics">https://github.com/paywqiao-max/ML-Basics</a></em></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://paywqiao-max.github.io/2026/04/08/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E5%9B%9B%EF%BC%89%EF%BC%9ATransformer%E4%B8%8E%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6/" data-id="cuidVSAlhqSyCfKmamhlUMukv" data-title="机器学习基础（十四）：Transformer与注意力机制" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/PyTorch/" rel="tag">PyTorch</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Self-Attention/" rel="tag">Self-Attention</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Transformer/" rel="tag">Transformer</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6/" rel="tag">注意力机制</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" rel="tag">深度学习</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2026/04/07/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%B8%89%EF%BC%89%EF%BC%9A%E5%BE%AA%E7%8E%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9CRNN%E4%B8%8ELSTM/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">后一篇</strong>
+      <div class="article-nav-title">机器学习基础（十三）：循环神经网络RNN与LSTM</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80/">机器学习基础</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a></li></ul></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0-%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C-%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0-ReLU/" rel="tag">-机器学习 -深度学习 -神经网络 -激活函数 -ReLU</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Adam/" rel="tag">Adam</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AdamW/" rel="tag">AdamW</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/BatchNorm/" rel="tag">BatchNorm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CNN/" rel="tag">CNN</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Dropout/" rel="tag">Dropout</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GPU%E5%8A%A0%E9%80%9F/" rel="tag">GPU加速</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LSTM/" rel="tag">LSTM</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NumPy/" rel="tag">NumPy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/PyTorch/" rel="tag">PyTorch</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Python/" rel="tag">Python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/RNN/" rel="tag">RNN</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SGD/" rel="tag">SGD</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Self-Attention/" rel="tag">Self-Attention</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Sigmoid/" rel="tag">Sigmoid</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Transformer/" rel="tag">Transformer</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/scikit-learn/" rel="tag">scikit-learn</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BA%A4%E5%8F%89%E7%86%B5/" rel="tag">交叉熵</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%8E0%E5%BC%80%E5%A7%8B/" rel="tag">从0开始</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BC%98%E5%8C%96%E5%99%A8/" rel="tag">优化器</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" rel="tag">优化方法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%86%E7%B1%BB%E7%AE%97%E6%B3%95/" rel="tag">分类算法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" rel="tag">卷积神经网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD/" rel="tag">反向传播</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%9B%BE%E5%83%8F%E5%88%86%E7%B1%BB/" rel="tag">图像分类</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" rel="tag">学习记录</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%BA%8F%E5%88%97%E5%BB%BA%E6%A8%A1/" rel="tag">序列建模</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" rel="tag">数学基础</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" rel="tag">梯度下降</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%AD%A3%E5%88%99%E5%8C%96/" rel="tag">正则化</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6/" rel="tag">注意力机制</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" rel="tag">深度学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%82%BC%E4%B8%B9%E6%8A%80%E5%B7%A7/" rel="tag">炼丹技巧</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" rel="tag">神经网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" rel="tag">线性代数</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92/" rel="tag">线性回归</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%87%AA%E5%8A%A8%E6%B1%82%E5%AF%BC/" rel="tag">自动求导</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/" rel="tag">计算机视觉</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%BF%87%E6%8B%9F%E5%90%88/" rel="tag">过拟合</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%80%BB%E8%BE%91%E5%9B%9E%E5%BD%92/" rel="tag">逻辑回归</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0-%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C-%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0-ReLU/" style="font-size: 10px;">-机器学习 -深度学习 -神经网络 -激活函数 -ReLU</a> <a href="/tags/Adam/" style="font-size: 10px;">Adam</a> <a href="/tags/AdamW/" style="font-size: 10px;">AdamW</a> <a href="/tags/BatchNorm/" style="font-size: 10px;">BatchNorm</a> <a href="/tags/CNN/" style="font-size: 10px;">CNN</a> <a href="/tags/Dropout/" style="font-size: 10px;">Dropout</a> <a href="/tags/GPU%E5%8A%A0%E9%80%9F/" style="font-size: 10px;">GPU加速</a> <a href="/tags/LSTM/" style="font-size: 10px;">LSTM</a> <a href="/tags/NumPy/" style="font-size: 12.5px;">NumPy</a> <a href="/tags/PyTorch/" style="font-size: 15px;">PyTorch</a> <a href="/tags/Python/" style="font-size: 10px;">Python</a> <a href="/tags/RNN/" style="font-size: 10px;">RNN</a> <a href="/tags/SGD/" style="font-size: 10px;">SGD</a> <a href="/tags/Self-Attention/" style="font-size: 10px;">Self-Attention</a> <a href="/tags/Sigmoid/" style="font-size: 10px;">Sigmoid</a> <a href="/tags/Transformer/" style="font-size: 10px;">Transformer</a> <a href="/tags/scikit-learn/" style="font-size: 10px;">scikit-learn</a> <a href="/tags/%E4%BA%A4%E5%8F%89%E7%86%B5/" style="font-size: 10px;">交叉熵</a> <a href="/tags/%E4%BB%8E0%E5%BC%80%E5%A7%8B/" style="font-size: 10px;">从0开始</a> <a href="/tags/%E4%BC%98%E5%8C%96%E5%99%A8/" style="font-size: 10px;">优化器</a> <a href="/tags/%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" style="font-size: 10px;">优化方法</a> <a href="/tags/%E5%88%86%E7%B1%BB%E7%AE%97%E6%B3%95/" style="font-size: 10px;">分类算法</a> <a href="/tags/%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">卷积神经网络</a> <a href="/tags/%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD/" style="font-size: 10px;">反向传播</a> <a href="/tags/%E5%9B%BE%E5%83%8F%E5%88%86%E7%B1%BB/" style="font-size: 10px;">图像分类</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" style="font-size: 15px;">学习记录</a> <a href="/tags/%E5%BA%8F%E5%88%97%E5%BB%BA%E6%A8%A1/" style="font-size: 10px;">序列建模</a> <a href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" style="font-size: 12.5px;">数学基础</a> <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" style="font-size: 20px;">机器学习</a> <a href="/tags/%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" style="font-size: 12.5px;">梯度下降</a> <a href="/tags/%E6%AD%A3%E5%88%99%E5%8C%96/" style="font-size: 10px;">正则化</a> <a href="/tags/%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6/" style="font-size: 10px;">注意力机制</a> <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" style="font-size: 17.5px;">深度学习</a> <a href="/tags/%E7%82%BC%E4%B8%B9%E6%8A%80%E5%B7%A7/" style="font-size: 12.5px;">炼丹技巧</a> <a href="/tags/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">神经网络</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" style="font-size: 15px;">线性代数</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92/" style="font-size: 10px;">线性回归</a> <a href="/tags/%E8%87%AA%E5%8A%A8%E6%B1%82%E5%AF%BC/" style="font-size: 10px;">自动求导</a> <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/" style="font-size: 10px;">计算机视觉</a> <a href="/tags/%E8%BF%87%E6%8B%9F%E5%90%88/" style="font-size: 10px;">过拟合</a> <a href="/tags/%E9%80%BB%E8%BE%91%E5%9B%9E%E5%BD%92/" style="font-size: 10px;">逻辑回归</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2026/04/">四月 2026</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2026/03/">三月 2026</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2026/04/08/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E5%9B%9B%EF%BC%89%EF%BC%9ATransformer%E4%B8%8E%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6/">机器学习基础（十四）：Transformer与注意力机制</a>
+          </li>
+        
+          <li>
+            <a href="/2026/04/07/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%B8%89%EF%BC%89%EF%BC%9A%E5%BE%AA%E7%8E%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9CRNN%E4%B8%8ELSTM/">机器学习基础（十三）：循环神经网络RNN与LSTM</a>
+          </li>
+        
+          <li>
+            <a href="/2026/04/06/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%BA%8C%EF%BC%89%EF%BC%9A%E4%BC%98%E5%8C%96%E5%99%A8%E5%A4%A7%E5%85%A8/">机器学习基础（十二）：优化器大全</a>
+          </li>
+        
+          <li>
+            <a href="/2026/04/04/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89%EF%BC%9A%E8%BF%87%E6%8B%9F%E5%90%88%E4%B8%8E%E6%AD%A3%E5%88%99%E5%8C%96/">机器学习基础（十一）：过拟合与正则化</a>
+          </li>
+        
+          <li>
+            <a href="/2026/04/03/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%EF%BC%89%EF%BC%9A%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9CCNN/">机器学习基础（十）：卷积神经网络CNN</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2026 忤逆<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
