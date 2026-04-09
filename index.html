@@ -88,6 +88,380 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-机器学习基础（十五）：Vision Transformer" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/04/09/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%BA%94%EF%BC%89%EF%BC%9AVision%20Transformer/" class="article-date">
+  <time class="dt-published" datetime="2026-04-09T15:10:00.000Z" itemprop="datePublished">2026-04-09</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80/">机器学习基础</a>►<a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2026/04/09/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%BA%94%EF%BC%89%EF%BC%9AVision%20Transformer/">机器学习基础（十五）：Vision Transformer</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="一、引言">一、引言</h2>
+<p>上一篇我们学习了 Transformer 在自然语言处理中的威力。2020年，Google 发表论文《An Image is Worth 16x16 Words》，将 Transformer 引入计算机视觉——**Vision Transformer（ViT）**诞生了。</p>
+<p>这一突破打破了 CNN 在视觉领域长达十年的垄断，证明了：</p>
+<blockquote>
+<p><strong>纯注意力机制也能在图像任务上取得SOTA</strong></p>
+</blockquote>
+<p><strong>本文目标：</strong></p>
+<ul>
+<li>理解 ViT 的核心思想：图像即序列</li>
+<li>掌握 Patch Embedding 和位置编码</li>
+<li>从零实现 ViT</li>
+<li>对比 ViT 与 CNN 的优劣</li>
+</ul>
+<hr>
+<h2 id="二、为什么图像需要-Transformer？">二、为什么图像需要 Transformer？</h2>
+<h3 id="2-1-CNN-的局限">2.1 CNN 的局限</h3>
+<p>CNN 通过卷积核提取局部特征，层层堆叠获得全局感知：</p>
+<table>
+<thead>
+<tr>
+<th>问题</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>局部感受野</strong></td>
+<td>需要多层才能看到全局信息</td>
+</tr>
+<tr>
+<td><strong>归纳偏置</strong></td>
+<td>平移等变性是优势也是限制</td>
+</tr>
+<tr>
+<td><strong>难以建模长距离依赖</strong></td>
+<td>远距离像素关系需要很多层传递</td>
+</tr>
+</tbody>
+</table>
+<h3 id="2-2-ViT-的核心洞察">2.2 ViT 的核心洞察</h3>
+<blockquote>
+<p>如果把图像切成小块（Patch），按顺序排列，不就是一个<strong>序列</strong>吗？</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">图像 [224×224×3]</span><br><span class="line">    ↓ 分块（16×16）</span><br><span class="line">14×14=196 个 Patch</span><br><span class="line">    ↓ 展平 + 线性投影</span><br><span class="line">196 个 token，每个 768 维</span><br><span class="line">    ↓ + 位置编码 + CLS</span><br><span class="line">输入 Transformer Encoder</span><br></pre></td></tr></table></figure>
+<p><strong>关键优势：</strong></p>
+<ul>
+<li>自注意力直接建模<strong>任意两个Patch</strong>的关系</li>
+<li>没有卷积的归纳偏置，<strong>数据驱动</strong>学习</li>
+<li>可以无缝迁移 NLP 的预训练技术</li>
+</ul>
+<hr>
+<h2 id="三、图像分块（Patch-Embedding）">三、图像分块（Patch Embedding）</h2>
+<h3 id="3-1-分块策略">3.1 分块策略</h3>
+<p>假设输入图像 $x \in \mathbb{R}^{H \times W \times C}$：</p>
+<ol>
+<li><strong>分块</strong>：每个 Patch 大小 $P \times P$</li>
+<li><strong>展平</strong>：每个 Patch 变成 $P^2 \cdot C$ 维向量</li>
+<li><strong>线性投影</strong>：映射到 $D$ 维（模型维度）</li>
+</ol>
+<p><strong>计算：</strong></p>
+<ul>
+<li>Patch 数量：$N = \frac{H}{P} \times \frac{W}{P}$</li>
+<li>输出维度：$[N, D]$</li>
+</ul>
+<h3 id="3-2-PyTorch-实现">3.2 PyTorch 实现</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> torch</span><br><span class="line"><span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">PatchEmbedding</span>(nn.Module):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, img_size=<span class="number">224</span>, patch_size=<span class="number">16</span>, in_channels=<span class="number">3</span>, embed_dim=<span class="number">768</span></span>):</span><br><span class="line">        <span class="built_in">super</span>().__init__()</span><br><span class="line">        <span class="variable language_">self</span>.img_size = img_size</span><br><span class="line">        <span class="variable language_">self</span>.patch_size = patch_size</span><br><span class="line">        <span class="variable language_">self</span>.num_patches = (img_size // patch_size) ** <span class="number">2</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 使用卷积实现分块 + 投影（高效）</span></span><br><span class="line">        <span class="variable language_">self</span>.proj = nn.Conv2d(</span><br><span class="line">            in_channels, </span><br><span class="line">            embed_dim, </span><br><span class="line">            kernel_size=patch_size, </span><br><span class="line">            stride=patch_size</span><br><span class="line">        )</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, x</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">        x: [batch, channels, height, width]</span></span><br><span class="line"><span class="string">        output: [batch, num_patches, embed_dim]</span></span><br><span class="line"><span class="string">        &quot;&quot;&quot;</span></span><br><span class="line">        x = <span class="variable language_">self</span>.proj(x)  <span class="comment"># [batch, embed_dim, H/P, W/P]</span></span><br><span class="line">        x = x.flatten(<span class="number">2</span>)  <span class="comment"># [batch, embed_dim, num_patches]</span></span><br><span class="line">        x = x.transpose(<span class="number">1</span>, <span class="number">2</span>)  <span class="comment"># [batch, num_patches, embed_dim]</span></span><br><span class="line">        <span class="keyword">return</span> x</span><br><span class="line"></span><br><span class="line"><span class="comment"># 测试</span></span><br><span class="line">x = torch.randn(<span class="number">2</span>, <span class="number">3</span>, <span class="number">224</span>, <span class="number">224</span>)</span><br><span class="line">patch_embed = PatchEmbedding()</span><br><span class="line">patches = patch_embed(x)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;输入图像: <span class="subst">&#123;x.shape&#125;</span>&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;Patch Embedding: <span class="subst">&#123;patches.shape&#125;</span>&quot;</span>)  <span class="comment"># [2, 196, 768]</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;Patch 数量: <span class="subst">&#123;patch_embed.num_patches&#125;</span>&quot;</span>)  <span class="comment"># 196</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="四、ViT-整体架构">四、ViT 整体架构</h2>
+<h3 id="4-1-完整流程">4.1 完整流程</h3>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">输入图像 [B, 3, 224, 224]</span><br><span class="line">    ↓</span><br><span class="line">┌─────────────────────────────────────────┐</span><br><span class="line">│           Patch Embedding               │</span><br><span class="line">│   Conv2d(3, 768, kernel=16, stride=16)  │</span><br><span class="line">└─────────────────────────────────────────┘</span><br><span class="line">    ↓</span><br><span class="line">[B, 196, 768]  (196=14×14 个 Patch)</span><br><span class="line">    ↓</span><br><span class="line">┌─────────────────────────────────────────┐</span><br><span class="line">│  + CLS Token [B, 1, 768]                │</span><br><span class="line">│  + Position Embedding [197, 768]        │</span><br><span class="line">└─────────────────────────────────────────┘</span><br><span class="line">    ↓</span><br><span class="line">[B, 197, 768]  (197 = 196 patches + 1 CLS)</span><br><span class="line">    ↓</span><br><span class="line">┌─────────────────────────────────────────┐</span><br><span class="line">│      Transformer Encoder (×L)           │</span><br><span class="line">│  - Multi-Head Self-Attention            │</span><br><span class="line">│  - MLP (Feed Forward)                   │</span><br><span class="line">│  - Layer Norm + Residual                │</span><br><span class="line">└─────────────────────────────────────────┘</span><br><span class="line">    ↓</span><br><span class="line">[B, 197, 768]</span><br><span class="line">    ↓</span><br><span class="line">取 CLS Token 输出 [B, 768]</span><br><span class="line">    ↓</span><br><span class="line">MLP Head (分类层) [B, num_classes]</span><br></pre></td></tr></table></figure>
+<h3 id="4-2-与-NLP-Transformer-的对比">4.2 与 NLP Transformer 的对比</h3>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>NLP Transformer</th>
+<th>ViT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>输入</strong></td>
+<td>词序列</td>
+<td>图像 Patch 序列</td>
+</tr>
+<tr>
+<td><strong>Embedding</strong></td>
+<td>Word Embedding</td>
+<td>Patch Embedding (Conv2d)</td>
+</tr>
+<tr>
+<td><strong>位置编码</strong></td>
+<td>正弦/可学习</td>
+<td>可学习 1D/2D</td>
+</tr>
+<tr>
+<td><strong>特殊 Token</strong></td>
+<td>[CLS] 可选</td>
+<td>[CLS] 必须（分类）</td>
+</tr>
+<tr>
+<td><strong>预训练</strong></td>
+<td>大规模文本</td>
+<td>需要大规模图像 (JFT-300M)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="五、位置编码的变体">五、位置编码的变体</h2>
+<h3 id="5-1-1D-位置编码">5.1 1D 位置编码</h3>
+<p>最简单的方式：给每个 Patch 一个可学习的向量</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable language_">self</span>.pos_embed = nn.Parameter(torch.zeros(<span class="number">1</span>, num_patches + <span class="number">1</span>, embed_dim))</span><br></pre></td></tr></table></figure>
+<h3 id="5-2-2D-位置编码">5.2 2D 位置编码</h3>
+<p>考虑图像的二维结构，分别学习行和列的位置编码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 分别学习行和列的位置编码</span></span><br><span class="line"><span class="variable language_">self</span>.pos_embed_x = nn.Parameter(torch.zeros(<span class="number">1</span>, num_patches_x, embed_dim // <span class="number">2</span>))</span><br><span class="line"><span class="variable language_">self</span>.pos_embed_y = nn.Parameter(torch.zeros(<span class="number">1</span>, num_patches_y, embed_dim // <span class="number">2</span>))</span><br></pre></td></tr></table></figure>
+<h3 id="5-3-相对位置编码">5.3 相对位置编码</h3>
+<p>Swin Transformer 使用相对位置编码，更适合局部窗口注意力。</p>
+<h3 id="5-4-实现">5.4 实现</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">ViT</span>(nn.Module):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params"></span></span><br><span class="line"><span class="params">        self,</span></span><br><span class="line"><span class="params">        img_size=<span class="number">224</span>,</span></span><br><span class="line"><span class="params">        patch_size=<span class="number">16</span>,</span></span><br><span class="line"><span class="params">        in_channels=<span class="number">3</span>,</span></span><br><span class="line"><span class="params">        num_classes=<span class="number">1000</span>,</span></span><br><span class="line"><span class="params">        embed_dim=<span class="number">768</span>,</span></span><br><span class="line"><span class="params">        depth=<span class="number">12</span>,</span></span><br><span class="line"><span class="params">        num_heads=<span class="number">12</span>,</span></span><br><span class="line"><span class="params">        mlp_ratio=<span class="number">4.0</span>,</span></span><br><span class="line"><span class="params">        dropout=<span class="number">0.1</span></span></span><br><span class="line"><span class="params">    </span>):</span><br><span class="line">        <span class="built_in">super</span>().__init__()</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># Patch Embedding</span></span><br><span class="line">        <span class="variable language_">self</span>.patch_embed = PatchEmbedding(</span><br><span class="line">            img_size, patch_size, in_channels, embed_dim</span><br><span class="line">        )</span><br><span class="line">        num_patches = <span class="variable language_">self</span>.patch_embed.num_patches</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># CLS Token</span></span><br><span class="line">        <span class="variable language_">self</span>.cls_token = nn.Parameter(torch.zeros(<span class="number">1</span>, <span class="number">1</span>, embed_dim))</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 位置编码（可学习）</span></span><br><span class="line">        <span class="variable language_">self</span>.pos_embed = nn.Parameter(</span><br><span class="line">            torch.zeros(<span class="number">1</span>, num_patches + <span class="number">1</span>, embed_dim)</span><br><span class="line">        )</span><br><span class="line">        <span class="variable language_">self</span>.dropout = nn.Dropout(dropout)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># Transformer Encoder</span></span><br><span class="line">        encoder_layer = nn.TransformerEncoderLayer(</span><br><span class="line">            d_model=embed_dim,</span><br><span class="line">            nhead=num_heads,</span><br><span class="line">            dim_feedforward=<span class="built_in">int</span>(embed_dim * mlp_ratio),</span><br><span class="line">            dropout=dropout,</span><br><span class="line">            activation=<span class="string">&#x27;gelu&#x27;</span>,</span><br><span class="line">            batch_first=<span class="literal">True</span></span><br><span class="line">        )</span><br><span class="line">        <span class="variable language_">self</span>.transformer = nn.TransformerEncoder(encoder_layer, num_layers=depth)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 分类头</span></span><br><span class="line">        <span class="variable language_">self</span>.norm = nn.LayerNorm(embed_dim)</span><br><span class="line">        <span class="variable language_">self</span>.head = nn.Linear(embed_dim, num_classes)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 初始化</span></span><br><span class="line">        nn.init.normal_(<span class="variable language_">self</span>.cls_token, std=<span class="number">0.02</span>)</span><br><span class="line">        nn.init.normal_(<span class="variable language_">self</span>.pos_embed, std=<span class="number">0.02</span>)</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, x</span>):</span><br><span class="line">        batch_size = x.shape[<span class="number">0</span>]</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># Patch Embedding</span></span><br><span class="line">        x = <span class="variable language_">self</span>.patch_embed(x)  <span class="comment"># [B, N, D]</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 添加 CLS Token</span></span><br><span class="line">        cls_tokens = <span class="variable language_">self</span>.cls_token.expand(batch_size, -<span class="number">1</span>, -<span class="number">1</span>)  <span class="comment"># [B, 1, D]</span></span><br><span class="line">        x = torch.cat([cls_tokens, x], dim=<span class="number">1</span>)  <span class="comment"># [B, N+1, D]</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 添加位置编码</span></span><br><span class="line">        x = x + <span class="variable language_">self</span>.pos_embed</span><br><span class="line">        x = <span class="variable language_">self</span>.dropout(x)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># Transformer</span></span><br><span class="line">        x = <span class="variable language_">self</span>.transformer(x)  <span class="comment"># [B, N+1, D]</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 取 CLS Token 输出分类</span></span><br><span class="line">        x = <span class="variable language_">self</span>.norm(x[:, <span class="number">0</span>])  <span class="comment"># [B, D]</span></span><br><span class="line">        x = <span class="variable language_">self</span>.head(x)  <span class="comment"># [B, num_classes]</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> x</span><br><span class="line"></span><br><span class="line"><span class="comment"># 测试</span></span><br><span class="line">model = ViT(img_size=<span class="number">224</span>, patch_size=<span class="number">16</span>, num_classes=<span class="number">10</span>)</span><br><span class="line">x = torch.randn(<span class="number">2</span>, <span class="number">3</span>, <span class="number">224</span>, <span class="number">224</span>)</span><br><span class="line">out = model(x)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;ViT 输出: <span class="subst">&#123;out.shape&#125;</span>&quot;</span>)  <span class="comment"># [2, 10]</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="六、CLS-Token-与全局表示">六、CLS Token 与全局表示</h2>
+<h3 id="6-1-为什么需要-CLS-Token？">6.1 为什么需要 CLS Token？</h3>
+<p>BERT 中使用 [CLS] token 的表示作为句子级别的特征，ViT 借鉴了这一设计：</p>
+<ul>
+<li><strong>CLS Token</strong> 与所有 Patch 都有注意力交互</li>
+<li>通过自注意力<strong>聚合全局信息</strong></li>
+<li>比全局平均池化更灵活</li>
+</ul>
+<h3 id="6-2-替代方案：全局平均池化">6.2 替代方案：全局平均池化</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 不使用 CLS Token，对所有 Patch 取平均</span></span><br><span class="line">x = x.mean(dim=<span class="number">1</span>)  <span class="comment"># [B, D]</span></span><br></pre></td></tr></table></figure>
+<p>实验表明两者性能相近，但 CLS Token 更便于与 NLP 预训练模型统一。</p>
+<hr>
+<h2 id="七、ViT-训练技巧">七、ViT 训练技巧</h2>
+<h3 id="7-1-大数据预训练是关键">7.1 大数据预训练是关键</h3>
+<table>
+<thead>
+<tr>
+<th>数据集大小</th>
+<th>ImageNet-1k (1.3M)</th>
+<th>JFT-300M (300M)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ViT-Base</td>
+<td>77.9%</td>
+<td>84.2%</td>
+</tr>
+<tr>
+<td>ResNet-50</td>
+<td>76.2%</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<p><strong>结论：</strong> ViT 需要<strong>大规模数据</strong>才能超越 CNN。</p>
+<h3 id="7-2-知识蒸馏（DeiT）">7.2 知识蒸馏（DeiT）</h3>
+<p>Data-efficient Image Transformer (DeiT) 使用知识蒸馏让小数据集也能训练好 ViT：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 蒸馏损失 = 软标签损失 + 硬标签损失</span></span><br><span class="line">distillation_loss = soft_loss(student_logits, teacher_logits)</span><br><span class="line">classification_loss = hard_loss(student_logits, labels)</span><br><span class="line">total_loss = <span class="number">0.9</span> * distillation_loss + <span class="number">0.1</span> * classification_loss</span><br></pre></td></tr></table></figure>
+<h3 id="7-3-数据增强">7.3 数据增强</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> torchvision <span class="keyword">import</span> transforms</span><br><span class="line"></span><br><span class="line">train_transform = transforms.Compose([</span><br><span class="line">    transforms.RandomResizedCrop(<span class="number">224</span>),</span><br><span class="line">    transforms.RandomHorizontalFlip(),</span><br><span class="line">    transforms.ColorJitter(<span class="number">0.4</span>, <span class="number">0.4</span>, <span class="number">0.4</span>),</span><br><span class="line">    transforms.ToTensor(),</span><br><span class="line">    transforms.Normalize(mean=[<span class="number">0.485</span>, <span class="number">0.456</span>, <span class="number">0.406</span>],</span><br><span class="line">                        std=[<span class="number">0.229</span>, <span class="number">0.224</span>, <span class="number">0.225</span>])</span><br><span class="line">])</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="八、ViT-vs-CNN-对比实验">八、ViT vs CNN 对比实验</h2>
+<h3 id="8-1-CIFAR-10-完整训练代码">8.1 CIFAR-10 完整训练代码</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> torch</span><br><span class="line"><span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn</span><br><span class="line"><span class="keyword">import</span> torch.optim <span class="keyword">as</span> optim</span><br><span class="line"><span class="keyword">from</span> torch.utils.data <span class="keyword">import</span> DataLoader</span><br><span class="line"><span class="keyword">from</span> torchvision <span class="keyword">import</span> datasets, transforms</span><br><span class="line"></span><br><span class="line"><span class="comment"># 数据准备</span></span><br><span class="line">train_transform = transforms.Compose([</span><br><span class="line">    transforms.Resize(<span class="number">224</span>),</span><br><span class="line">    transforms.RandomHorizontalFlip(),</span><br><span class="line">    transforms.ToTensor(),</span><br><span class="line">    transforms.Normalize((<span class="number">0.4914</span>, <span class="number">0.4822</span>, <span class="number">0.4465</span>), (<span class="number">0.2023</span>, <span class="number">0.1994</span>, <span class="number">0.2010</span>))</span><br><span class="line">])</span><br><span class="line"></span><br><span class="line">test_transform = transforms.Compose([</span><br><span class="line">    transforms.Resize(<span class="number">224</span>),</span><br><span class="line">    transforms.ToTensor(),</span><br><span class="line">    transforms.Normalize((<span class="number">0.4914</span>, <span class="number">0.4822</span>, <span class="number">0.4465</span>), (<span class="number">0.2023</span>, <span class="number">0.1994</span>, <span class="number">0.2010</span>))</span><br><span class="line">])</span><br><span class="line"></span><br><span class="line">train_dataset = datasets.CIFAR10(</span><br><span class="line">    root=<span class="string">&#x27;./data&#x27;</span>, train=<span class="literal">True</span>, download=<span class="literal">True</span>, transform=train_transform</span><br><span class="line">)</span><br><span class="line">test_dataset = datasets.CIFAR10(</span><br><span class="line">    root=<span class="string">&#x27;./data&#x27;</span>, train=<span class="literal">False</span>, download=<span class="literal">True</span>, transform=test_transform</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">train_loader = DataLoader(train_dataset, batch_size=<span class="number">64</span>, shuffle=<span class="literal">True</span>, num_workers=<span class="number">2</span>)</span><br><span class="line">test_loader = DataLoader(test_dataset, batch_size=<span class="number">64</span>, shuffle=<span class="literal">False</span>, num_workers=<span class="number">2</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 训练函数</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">train_epoch</span>(<span class="params">model, loader, optimizer, criterion, device</span>):</span><br><span class="line">    model.train()</span><br><span class="line">    total_loss = <span class="number">0</span></span><br><span class="line">    correct = <span class="number">0</span></span><br><span class="line">    total = <span class="number">0</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> images, labels <span class="keyword">in</span> loader:</span><br><span class="line">        images, labels = images.to(device), labels.to(device)</span><br><span class="line">        </span><br><span class="line">        optimizer.zero_grad()</span><br><span class="line">        outputs = model(images)</span><br><span class="line">        loss = criterion(outputs, labels)</span><br><span class="line">        loss.backward()</span><br><span class="line">        optimizer.step()</span><br><span class="line">        </span><br><span class="line">        total_loss += loss.item()</span><br><span class="line">        _, predicted = outputs.<span class="built_in">max</span>(<span class="number">1</span>)</span><br><span class="line">        total += labels.size(<span class="number">0</span>)</span><br><span class="line">        correct += predicted.eq(labels).<span class="built_in">sum</span>().item()</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> total_loss / <span class="built_in">len</span>(loader), <span class="number">100.</span> * correct / total</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">evaluate</span>(<span class="params">model, loader, criterion, device</span>):</span><br><span class="line">    model.<span class="built_in">eval</span>()</span><br><span class="line">    total_loss = <span class="number">0</span></span><br><span class="line">    correct = <span class="number">0</span></span><br><span class="line">    total = <span class="number">0</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">with</span> torch.no_grad():</span><br><span class="line">        <span class="keyword">for</span> images, labels <span class="keyword">in</span> loader:</span><br><span class="line">            images, labels = images.to(device), labels.to(device)</span><br><span class="line">            outputs = model(images)</span><br><span class="line">            loss = criterion(outputs, labels)</span><br><span class="line">            </span><br><span class="line">            total_loss += loss.item()</span><br><span class="line">            _, predicted = outputs.<span class="built_in">max</span>(<span class="number">1</span>)</span><br><span class="line">            total += labels.size(<span class="number">0</span>)</span><br><span class="line">            correct += predicted.eq(labels).<span class="built_in">sum</span>().item()</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> total_loss / <span class="built_in">len</span>(loader), <span class="number">100.</span> * correct / total</span><br><span class="line"></span><br><span class="line"><span class="comment"># 训练 ViT</span></span><br><span class="line">device = torch.device(<span class="string">&#x27;cuda&#x27;</span> <span class="keyword">if</span> torch.cuda.is_available() <span class="keyword">else</span> <span class="string">&#x27;cpu&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用较小的 ViT 配置适配 CIFAR-10</span></span><br><span class="line">vit_model = ViT(</span><br><span class="line">    img_size=<span class="number">224</span>,</span><br><span class="line">    patch_size=<span class="number">16</span>,</span><br><span class="line">    in_channels=<span class="number">3</span>,</span><br><span class="line">    num_classes=<span class="number">10</span>,</span><br><span class="line">    embed_dim=<span class="number">384</span>,      <span class="comment"># 小模型</span></span><br><span class="line">    depth=<span class="number">6</span>,            <span class="comment"># 6层</span></span><br><span class="line">    num_heads=<span class="number">6</span>,</span><br><span class="line">    dropout=<span class="number">0.1</span></span><br><span class="line">).to(device)</span><br><span class="line"></span><br><span class="line">criterion = nn.CrossEntropyLoss()</span><br><span class="line">optimizer = optim.AdamW(vit_model.parameters(), lr=<span class="number">1e-3</span>, weight_decay=<span class="number">0.05</span>)</span><br><span class="line">scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=<span class="number">50</span>)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;开始训练 ViT...&quot;</span>)</span><br><span class="line"><span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">50</span>):</span><br><span class="line">    train_loss, train_acc = train_epoch(vit_model, train_loader, optimizer, criterion, device)</span><br><span class="line">    test_loss, test_acc = evaluate(vit_model, test_loader, criterion, device)</span><br><span class="line">    scheduler.step()</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (epoch + <span class="number">1</span>) % <span class="number">10</span> == <span class="number">0</span>:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;Epoch <span class="subst">&#123;epoch+<span class="number">1</span>&#125;</span>: Train Acc=<span class="subst">&#123;train_acc:<span class="number">.2</span>f&#125;</span>%, Test Acc=<span class="subst">&#123;test_acc:<span class="number">.2</span>f&#125;</span>%&quot;</span>)</span><br></pre></td></tr></table></figure>
+<h3 id="8-2-对比结果">8.2 对比结果</h3>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>参数量</th>
+<th>CIFAR-10 准确率</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ResNet-18</td>
+<td>11M</td>
+<td>~93%</td>
+</tr>
+<tr>
+<td>ViT-Tiny</td>
+<td>5.7M</td>
+<td>~90% (需更多epoch)</td>
+</tr>
+<tr>
+<td>ViT-Small</td>
+<td>22M</td>
+<td>~92%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>观察：</strong></p>
+<ul>
+<li>ViT 收敛较慢，需要更多 epoch</li>
+<li>小数据集上 CNN 仍有优势</li>
+<li>ViT 的优势在大规模数据上更明显</li>
+</ul>
+<hr>
+<h2 id="九、ViT-的变体">九、ViT 的变体</h2>
+<h3 id="9-1-DeiT-Data-efficient-Image-Transformer">9.1 DeiT (Data-efficient Image Transformer)</h3>
+<ul>
+<li>使用知识蒸馏减少对大数据的依赖</li>
+<li>在 ImageNet 上训练即可达到很好效果</li>
+</ul>
+<h3 id="9-2-Swin-Transformer">9.2 Swin Transformer</h3>
+<ul>
+<li><strong>分层特征金字塔</strong>：多尺度特征</li>
+<li><strong>移位窗口注意力</strong>：降低计算复杂度</li>
+<li>成为目标检测、分割的新基准</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Swin Transformer</span><br><span class="line">├── Patch Partition (4×4)</span><br><span class="line">├── Stage 1: 嵌入 + 窗口注意力 (H/4 × W/4)</span><br><span class="line">├── Stage 2: 合并 + 窗口注意力 (H/8 × W/8)</span><br><span class="line">├── Stage 3: 合并 + 窗口注意力 (H/16 × W/16)</span><br><span class="line">└── Stage 4: 合并 + 窗口注意力 (H/32 × W/32)</span><br></pre></td></tr></table></figure>
+<h3 id="9-3-ConvNeXt">9.3 ConvNeXt</h3>
+<p>将 Transformer 的设计思想（大kernel、LayerNorm、GELU）应用到 CNN：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ConvNeXt Block</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ConvNeXtBlock</span>(nn.Module):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, dim</span>):</span><br><span class="line">        <span class="built_in">super</span>().__init__()</span><br><span class="line">        <span class="variable language_">self</span>.dwconv = nn.Conv2d(dim, dim, kernel_size=<span class="number">7</span>, padding=<span class="number">3</span>, groups=dim)</span><br><span class="line">        <span class="variable language_">self</span>.norm = nn.LayerNorm(dim)</span><br><span class="line">        <span class="variable language_">self</span>.pwconv1 = nn.Linear(dim, <span class="number">4</span> * dim)</span><br><span class="line">        <span class="variable language_">self</span>.act = nn.GELU()</span><br><span class="line">        <span class="variable language_">self</span>.pwconv2 = nn.Linear(<span class="number">4</span> * dim, dim)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, x</span>):</span><br><span class="line">        <span class="built_in">input</span> = x</span><br><span class="line">        x = <span class="variable language_">self</span>.dwconv(x)</span><br><span class="line">        x = x.permute(<span class="number">0</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">1</span>)  <span class="comment"># [B, H, W, C]</span></span><br><span class="line">        x = <span class="variable language_">self</span>.norm(x)</span><br><span class="line">        x = <span class="variable language_">self</span>.pwconv1(x)</span><br><span class="line">        x = <span class="variable language_">self</span>.act(x)</span><br><span class="line">        x = <span class="variable language_">self</span>.pwconv2(x)</span><br><span class="line">        x = x.permute(<span class="number">0</span>, <span class="number">3</span>, <span class="number">1</span>, <span class="number">2</span>)  <span class="comment"># [B, C, H, W]</span></span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">input</span> + x</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="十、何时用-ViT，何时用-CNN？">十、何时用 ViT，何时用 CNN？</h2>
+<h3 id="10-1-选择指南">10.1 选择指南</h3>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>推荐</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>小数据集 (&lt;10K)</td>
+<td>CNN</td>
+<td>归纳偏置帮助泛化</td>
+</tr>
+<tr>
+<td>大数据集 (&gt;1M)</td>
+<td>ViT</td>
+<td>全局注意力优势显现</td>
+</tr>
+<tr>
+<td>需要快速推理</td>
+<td>CNN</td>
+<td>计算效率更高</td>
+</tr>
+<tr>
+<td>需要可解释性</td>
+<td>ViT</td>
+<td>注意力可视化直观</td>
+</tr>
+<tr>
+<td>多模态任务</td>
+<td>ViT</td>
+<td>与文本Transformer统一架构</td>
+</tr>
+<tr>
+<td>边缘设备部署</td>
+<td>CNN</td>
+<td>模型更小、更快</td>
+</tr>
+</tbody>
+</table>
+<h3 id="10-2-混合架构">10.2 混合架构</h3>
+<p><strong>CoAtNet</strong>：结合卷积和注意力</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">CoAtNet = Conv + Transformer</span><br><span class="line">├── 早期层：卷积（局部特征）</span><br><span class="line">└── 后期层：Transformer（全局关系）</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="十一、总结">十一、总结</h2>
+<h3 id="11-1-核心要点">11.1 核心要点</h3>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">Vision Transformer</span><br><span class="line">├── 核心思想</span><br><span class="line">│   └── 图像 = Patch 序列 (16×16 words)</span><br><span class="line">├── 关键组件</span><br><span class="line">│   ├── Patch Embedding: Conv2d 实现</span><br><span class="line">│   ├── CLS Token: 全局表示</span><br><span class="line">│   ├── Position Embedding: 可学习 1D/2D</span><br><span class="line">│   └── Transformer Encoder: 标准结构</span><br><span class="line">├── 训练要点</span><br><span class="line">│   ├── 需要大数据预训练</span><br><span class="line">│   ├── 知识蒸馏提升小数据表现</span><br><span class="line">│   └── 强数据增强</span><br><span class="line">├── 优势</span><br><span class="line">│   ├── 全局感受野</span><br><span class="line">│   ├── 与NLP统一架构</span><br><span class="line">│   └── 可解释性强</span><br><span class="line">└── 局限</span><br><span class="line">    ├── 数据 hungry</span><br><span class="line">    ├── 计算量大</span><br><span class="line">    └── 小数据集不如CNN</span><br></pre></td></tr></table></figure>
+<h3 id="11-2-学习路径回顾">11.2 学习路径回顾</h3>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">机器学习基础系列</span><br><span class="line">├── (一) 绪论</span><br><span class="line">├── (二) 线性回归</span><br><span class="line">├── ...</span><br><span class="line">├── (十) 卷积神经网络CNN</span><br><span class="line">├── (十一) 过拟合与正则化</span><br><span class="line">├── (十二) 优化器大全</span><br><span class="line">├── (十三) 循环神经网络RNN与LSTM</span><br><span class="line">├── (十四) Transformer与注意力机制</span><br><span class="line">└── (十五) Vision Transformer ← 你在这里</span><br><span class="line">    └── 下一步: 多模态/目标检测/生成模型</span><br></pre></td></tr></table></figure>
+<h3 id="11-3-下一步学习建议">11.3 下一步学习建议</h3>
+<ol>
+<li><strong>Swin Transformer</strong>：窗口注意力与多尺度特征</li>
+<li><strong>CLIP</strong>：视觉-语言预训练</li>
+<li><strong>Diffusion Models</strong>：基于Transformer的图像生成</li>
+<li><strong>DETR</strong>：用Transformer做目标检测</li>
+</ol>
+<hr>
+<h2 id="附录：ViT-配置速查表">附录：ViT 配置速查表</h2>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>Patch</th>
+<th>Layers</th>
+<th>Hidden</th>
+<th>Heads</th>
+<th>参数量</th>
+<th>ImageNet Top-1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ViT-Tiny</td>
+<td>16×16</td>
+<td>12</td>
+<td>192</td>
+<td>3</td>
+<td>5.7M</td>
+<td>75.4%</td>
+</tr>
+<tr>
+<td>ViT-Small</td>
+<td>16×16</td>
+<td>12</td>
+<td>384</td>
+<td>6</td>
+<td>22M</td>
+<td>81.4%</td>
+</tr>
+<tr>
+<td>ViT-Base</td>
+<td>16×16</td>
+<td>12</td>
+<td>768</td>
+<td>12</td>
+<td>86M</td>
+<td>84.2%</td>
+</tr>
+<tr>
+<td>ViT-Large</td>
+<td>16×16</td>
+<td>24</td>
+<td>1024</td>
+<td>16</td>
+<td>307M</td>
+<td>85.2%</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><em>本文代码可在 GitHub 获取：<a target="_blank" rel="noopener" href="https://github.com/paywqiao-max/ML-Basics">https://github.com/paywqiao-max/ML-Basics</a></em></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://paywqiao-max.github.io/2026/04/09/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%BA%94%EF%BC%89%EF%BC%9AVision%20Transformer/" data-id="cuidi_LA7gQZUrcYnh3dCXkJL" data-title="机器学习基础（十五）：Vision Transformer" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/PyTorch/" rel="tag">PyTorch</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ViT/" rel="tag">ViT</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Vision-Transformer/" rel="tag">Vision Transformer</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6/" rel="tag">注意力机制</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" rel="tag">深度学习</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/" rel="tag">计算机视觉</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-机器学习基础（十四）：Transformer与注意力机制" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
     <a href="/2026/04/08/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E5%9B%9B%EF%BC%89%EF%BC%9ATransformer%E4%B8%8E%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6/" class="article-date">
@@ -424,7 +798,7 @@ $$PE_{(pos, 2i+1)} = \cos\left(\frac{pos}{10000^{2i/d_{model}}}\right)$$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/04/08/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E5%9B%9B%EF%BC%89%EF%BC%9ATransformer%E4%B8%8E%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6/" data-id="cuidVSAlhqSyCfKmamhlUMukv" data-title="机器学习基础（十四）：Transformer与注意力机制" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/04/08/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E5%9B%9B%EF%BC%89%EF%BC%9ATransformer%E4%B8%8E%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6/" data-id="cuidqEXvH3SRjqZhvtkV_EZY3" data-title="机器学习基础（十四）：Transformer与注意力机制" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -772,7 +1146,7 @@ $$h_t = (1 - z_t) \odot h_{t-1} + z_t \odot \tilde{h}_t$$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/04/07/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%B8%89%EF%BC%89%EF%BC%9A%E5%BE%AA%E7%8E%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9CRNN%E4%B8%8ELSTM/" data-id="cuidTlSP23DXXqjOyYmC4gx3D" data-title="机器学习基础（十三）：循环神经网络RNN与LSTM" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/04/07/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%B8%89%EF%BC%89%EF%BC%9A%E5%BE%AA%E7%8E%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9CRNN%E4%B8%8ELSTM/" data-id="cuidXpURshmUXm0luD3OBhdsR" data-title="机器学习基础（十三）：循环神经网络RNN与LSTM" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -1102,7 +1476,7 @@ $$\theta_t = \theta_{t-1} - \frac{\eta}{\sqrt{\hat{v}_t} + \epsilon} \cdot \hat{
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/04/06/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%BA%8C%EF%BC%89%EF%BC%9A%E4%BC%98%E5%8C%96%E5%99%A8%E5%A4%A7%E5%85%A8/" data-id="cuidWhJ7W8Eu3GnuBdVMDfesb" data-title="机器学习基础（十二）：优化器大全" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/04/06/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%BA%8C%EF%BC%89%EF%BC%9A%E4%BC%98%E5%8C%96%E5%99%A8%E5%A4%A7%E5%85%A8/" data-id="cuidd3pmupfEXW4LzuDjGpsVL" data-title="机器学习基础（十二）：优化器大全" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -1567,7 +1941,7 @@ $$\theta_t = \theta_{t-1} - \frac{\eta}{\sqrt{\hat{v}_t} + \epsilon} \cdot \hat{
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/04/04/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89%EF%BC%9A%E8%BF%87%E6%8B%9F%E5%90%88%E4%B8%8E%E6%AD%A3%E5%88%99%E5%8C%96/" data-id="cuidT3u4xW2I9AuynA6yqufrX" data-title="机器学习基础（十一）：过拟合与正则化" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/04/04/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89%EF%BC%9A%E8%BF%87%E6%8B%9F%E5%90%88%E4%B8%8E%E6%AD%A3%E5%88%99%E5%8C%96/" data-id="cuidFs02yW8lnp1m9Y_EZA1Mz" data-title="机器学习基础（十一）：过拟合与正则化" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -2035,7 +2409,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/04/03/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%EF%BC%89%EF%BC%9A%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9CCNN/" data-id="cuid4f386JiauYEvTEFM1t6mc" data-title="机器学习基础（十）：卷积神经网络CNN" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/04/03/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%EF%BC%89%EF%BC%9A%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9CCNN/" data-id="cuidaMrjpp4_AEo5Roz-02JMo" data-title="机器学习基础（十）：卷积神经网络CNN" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -2361,7 +2735,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/04/02/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B9%9D%EF%BC%89%EF%BC%9APyTorch%E5%85%A5%E9%97%A8/" data-id="cuidF2gOdKMopk3hS0Tx5FGPq" data-title="机器学习基础（九）：PyTorch入门" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/04/02/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B9%9D%EF%BC%89%EF%BC%9APyTorch%E5%85%A5%E9%97%A8/" data-id="cuid7F53k0BCxI_4ypAGh7iUJ" data-title="机器学习基础（九）：PyTorch入门" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -2625,7 +2999,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/04/01/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%85%AB%EF%BC%89%EF%BC%9A%E9%80%BB%E8%BE%91%E5%9B%9E%E5%BD%92/" data-id="cuidz3UjxBLGnMPjPCqrH7UO4" data-title="机器学习基础（八）：逻辑回归" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/04/01/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%85%AB%EF%BC%89%EF%BC%9A%E9%80%BB%E8%BE%91%E5%9B%9E%E5%BD%92/" data-id="cuid7hpLPZbiP5tjjy4TjjHMj" data-title="机器学习基础（八）：逻辑回归" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -2878,7 +3252,7 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/03/31/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%83%EF%BC%89%EF%BC%9A%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0/" data-id="cuid_cGuIUYEk3SyZbc-aNNvZ" data-title="机器学习基础（七）：激活函数" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/03/31/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%B8%83%EF%BC%89%EF%BC%9A%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0/" data-id="cuidJqezLBwy4x0EXXWxvtSC6" data-title="机器学习基础（七）：激活函数" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -3054,189 +3428,11 @@ $$</p>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/03/30/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%85%AD%EF%BC%89%EF%BC%9A%E4%BB%8E0%E7%90%86%E8%A7%A3%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92%E2%80%94%E2%80%94%E4%BB%8E%E5%85%AC%E5%BC%8F%E5%88%B0%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/" data-id="cuidTT7ZXbsnGRLLkO8DM9JCw" data-title="机器学习基础（六）：从0理解线性回归——从公式到代码实现" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://paywqiao-max.github.io/2026/03/30/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%85%AD%EF%BC%89%EF%BC%9A%E4%BB%8E0%E7%90%86%E8%A7%A3%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92%E2%80%94%E2%80%94%E4%BB%8E%E5%85%AC%E5%BC%8F%E5%88%B0%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/" data-id="cuid1jWNLDjY4hg35m6hUL7dy" data-title="机器学习基础（六）：从0理解线性回归——从公式到代码实现" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Python/" rel="tag">Python</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E4%BB%8E0%E5%BC%80%E5%A7%8B/" rel="tag">从0开始</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" rel="tag">梯度下降</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92/" rel="tag">线性回归</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-机器学习基础（五）从0理解反向传播：梯度到底是怎么来的？" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2026/03/28/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%BA%94%EF%BC%89%E4%BB%8E0%E7%90%86%E8%A7%A3%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD%EF%BC%9A%E6%A2%AF%E5%BA%A6%E5%88%B0%E5%BA%95%E6%98%AF%E6%80%8E%E4%B9%88%E6%9D%A5%E7%9A%84%EF%BC%9F/" class="article-date">
-  <time class="dt-published" datetime="2026-03-28T15:23:05.000Z" itemprop="datePublished">2026-03-28</time>
-</a>
-    
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a>
-  </div>
-
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="p-name article-title" href="/2026/03/28/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%BA%94%EF%BC%89%E4%BB%8E0%E7%90%86%E8%A7%A3%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD%EF%BC%9A%E6%A2%AF%E5%BA%A6%E5%88%B0%E5%BA%95%E6%98%AF%E6%80%8E%E4%B9%88%E6%9D%A5%E7%9A%84%EF%BC%9F/">机器学习基础（五）从0理解反向传播：梯度到底是怎么来的？</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
-        <h1>从0理解反向传播：梯度到底是怎么来的？</h1>
-<blockquote>
-<p>在学习了损失函数和梯度下降之后，我产生了一个更本质的问题：<br>
-<strong>梯度，是从哪里来的？</strong></p>
-</blockquote>
-<hr>
-<h2 id="一、引入">一、引入</h2>
-<p>我们已经知道：</p>
-<ul>
-<li>损失函数（Loss）用于衡量预测误差</li>
-<li>梯度下降（Gradient Descent）用于不断优化参数</li>
-</ul>
-<p>但这里有一个关键缺口：</p>
-<blockquote>
-<p>梯度下降依赖“梯度”，那梯度是如何计算的？</p>
-</blockquote>
-<p>这就是今天要解决的问题 —— 反向传播（Backpropagation）</p>
-<hr>
-<h2 id="二、从一个最简单的模型开始">二、从一个最简单的模型开始</h2>
-<p>先看一个极简模型：</p>
-<p>$$<br>
-y = w \cdot x<br>
-$$</p>
-<p>假设真实值为 $y_{true}$，我们定义损失函数：</p>
-<p>$$<br>
-loss = (y - y_{true})^2<br>
-$$</p>
-<p>现在问题来了：</p>
-<blockquote>
-<p>我们如何计算：$\frac{\partial loss}{\partial w}$ ？</p>
-</blockquote>
-<hr>
-<h2 id="三、链式法则：一切的核心">三、链式法则：一切的核心</h2>
-<p>注意到：</p>
-<p>$$<br>
-loss \rightarrow y \rightarrow w<br>
-$$</p>
-<p>这是一个“嵌套关系”（复合函数）。</p>
-<p>根据微积分中的<strong>链式法则</strong>：</p>
-<p>$$<br>
-\frac{\partial loss}{\partial w} = \frac{\partial loss}{\partial y} \cdot \frac{\partial y}{\partial w}<br>
-$$</p>
-<p>我们拆开来看：</p>
-<ul>
-<li>$\frac{\partial loss}{\partial y} = 2(y - y_{true})$</li>
-<li>$\frac{\partial y}{\partial w} = x$</li>
-</ul>
-<p>所以：</p>
-<p>$$<br>
-\frac{\partial loss}{\partial w} = 2(y - y_{true}) \cdot x<br>
-$$</p>
-<p>这一步，就是“梯度的来源”。</p>
-<p>当我们把模型的层数增加时，同理，这时候每一层的梯度都与上一层直接相关，</p>
-<hr>
-<h2 id="四、什么是反向传播？">四、什么是反向传播？</h2>
-<blockquote>
-<p>从 loss 开始，一步一步往回求导</p>
-</blockquote>
-<p>这就是反向传播的本质：</p>
-<hr>
-<h3 id="前向传播（Forward-Pass）">前向传播（Forward Pass）</h3>
-<p>输入 x → 计算 y → 得到 loss</p>
-<hr>
-<h3 id="反向传播（Backward-Pass）">反向传播（Backward Pass）</h3>
-<p>从 loss 出发 → 逐层求导 → 得到梯度</p>
-<hr>
-<p>可以总结为一句话：</p>
-<blockquote>
-<p>前向传播算结果，反向传播算梯度</p>
-</blockquote>
-<hr>
-<h2 id="五、为什么叫“反向”？">五、为什么叫“反向”？</h2>
-<p>因为计算顺序是反的：</p>
-<ul>
-<li>正向：输入 → 输出</li>
-<li>反向：输出 → 输入</li>
-</ul>
-<p>也就是说：</p>
-<blockquote>
-<p>我们是从最终的误差（loss），一步一步“倒推”每个参数对结果的影响</p>
-</blockquote>
-<hr>
-<h2 id="六、反向传播-梯度下降-完整优化过程">六、反向传播 + 梯度下降 = 完整优化过程</h2>
-<p>现在我们把整个流程串起来：</p>
-<h3 id="1️、前向传播">1️、前向传播</h3>
-<p>$$<br>
-y = w \cdot x<br>
-$$</p>
-<h3 id="2️、计算损失">2️、计算损失</h3>
-<p>$$<br>
-loss = (y - y_{true})^2<br>
-$$</p>
-<h3 id="3️、反向传播">3️、反向传播</h3>
-<p>计算梯度：<br>
-$$<br>
-\frac{\partial loss}{\partial w}<br>
-$$</p>
-<h3 id="4️、梯度下降更新参数">4️、梯度下降更新参数</h3>
-<p>$$<br>
-w = w - \alpha \cdot \frac{\partial loss}{\partial w}<br>
-$$</p>
-<hr>
-<p>完整闭环：</p>
-<p>前向传播 → 损失函数 → 反向传播 → 梯度 → 参数更新</p>
-<hr>
-<h2 id="七、更深一层理解">七、更深一层理解</h2>
-<p>很多人把反向传播理解为“一个算法”，但其实：</p>
-<blockquote>
-<p>它本质上只是 <strong>链式法则的工程化应用</strong></p>
-</blockquote>
-<p>在神经网络中：</p>
-<ul>
-<li>每一层都是一个函数</li>
-<li>整个网络是“函数的嵌套”</li>
-</ul>
-<p>所以：</p>
-<blockquote>
-<p>反向传播 = 在复杂函数中高效地应用链式法则</p>
-</blockquote>
-<hr>
-<h2 id="八、总结">八、总结</h2>
-<p>这一篇我们解决了一个核心问题：</p>
-<blockquote>
-<p>梯度不是凭空来的，而是通过反向传播计算出来的</p>
-</blockquote>
-<p>可以用一句话总结：</p>
-<blockquote>
-<p>损失函数定义目标，反向传播提供梯度，梯度下降完成优化。</p>
-</blockquote>
-<hr>
-<blockquote>
-<p>如果说梯度下降回答的是“怎么优化”，<br>
-那反向传播回答的是“优化的信息从哪里来”。</p>
-</blockquote>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://paywqiao-max.github.io/2026/03/28/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E4%BA%94%EF%BC%89%E4%BB%8E0%E7%90%86%E8%A7%A3%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD%EF%BC%9A%E6%A2%AF%E5%BA%A6%E5%88%B0%E5%BA%95%E6%98%AF%E6%80%8E%E4%B9%88%E6%9D%A5%E7%9A%84%EF%BC%9F/" data-id="cuidnVD6KEaG3xKRX40QMVawd" data-title="机器学习基础（五）从0理解反向传播：梯度到底是怎么来的？" class="article-share-link"><span class="fa fa-share">分享</span></a>
-      
-      
-      
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD/" rel="tag">反向传播</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" rel="tag">梯度下降</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" rel="tag">深度学习</a></li></ul>
 
     </footer>
   </div>
@@ -3271,7 +3467,7 @@ $$</p>
   <div class="widget-wrap">
     <h3 class="widget-title">标签</h3>
     <div class="widget">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0-%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C-%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0-ReLU/" rel="tag">-机器学习 -深度学习 -神经网络 -激活函数 -ReLU</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Adam/" rel="tag">Adam</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AdamW/" rel="tag">AdamW</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/BatchNorm/" rel="tag">BatchNorm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CNN/" rel="tag">CNN</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Dropout/" rel="tag">Dropout</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GPU%E5%8A%A0%E9%80%9F/" rel="tag">GPU加速</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LSTM/" rel="tag">LSTM</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NumPy/" rel="tag">NumPy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/PyTorch/" rel="tag">PyTorch</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Python/" rel="tag">Python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/RNN/" rel="tag">RNN</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SGD/" rel="tag">SGD</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Self-Attention/" rel="tag">Self-Attention</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Sigmoid/" rel="tag">Sigmoid</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Transformer/" rel="tag">Transformer</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/scikit-learn/" rel="tag">scikit-learn</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BA%A4%E5%8F%89%E7%86%B5/" rel="tag">交叉熵</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%8E0%E5%BC%80%E5%A7%8B/" rel="tag">从0开始</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BC%98%E5%8C%96%E5%99%A8/" rel="tag">优化器</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" rel="tag">优化方法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%86%E7%B1%BB%E7%AE%97%E6%B3%95/" rel="tag">分类算法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" rel="tag">卷积神经网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD/" rel="tag">反向传播</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%9B%BE%E5%83%8F%E5%88%86%E7%B1%BB/" rel="tag">图像分类</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" rel="tag">学习记录</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%BA%8F%E5%88%97%E5%BB%BA%E6%A8%A1/" rel="tag">序列建模</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" rel="tag">数学基础</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" rel="tag">梯度下降</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%AD%A3%E5%88%99%E5%8C%96/" rel="tag">正则化</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6/" rel="tag">注意力机制</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" rel="tag">深度学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%82%BC%E4%B8%B9%E6%8A%80%E5%B7%A7/" rel="tag">炼丹技巧</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" rel="tag">神经网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" rel="tag">线性代数</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92/" rel="tag">线性回归</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%87%AA%E5%8A%A8%E6%B1%82%E5%AF%BC/" rel="tag">自动求导</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/" rel="tag">计算机视觉</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%BF%87%E6%8B%9F%E5%90%88/" rel="tag">过拟合</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%80%BB%E8%BE%91%E5%9B%9E%E5%BD%92/" rel="tag">逻辑回归</a></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0-%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C-%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0-ReLU/" rel="tag">-机器学习 -深度学习 -神经网络 -激活函数 -ReLU</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Adam/" rel="tag">Adam</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AdamW/" rel="tag">AdamW</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/BatchNorm/" rel="tag">BatchNorm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CNN/" rel="tag">CNN</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Dropout/" rel="tag">Dropout</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GPU%E5%8A%A0%E9%80%9F/" rel="tag">GPU加速</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LSTM/" rel="tag">LSTM</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NumPy/" rel="tag">NumPy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/PyTorch/" rel="tag">PyTorch</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Python/" rel="tag">Python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/RNN/" rel="tag">RNN</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SGD/" rel="tag">SGD</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Self-Attention/" rel="tag">Self-Attention</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Sigmoid/" rel="tag">Sigmoid</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Transformer/" rel="tag">Transformer</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ViT/" rel="tag">ViT</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Vision-Transformer/" rel="tag">Vision Transformer</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/scikit-learn/" rel="tag">scikit-learn</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BA%A4%E5%8F%89%E7%86%B5/" rel="tag">交叉熵</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%8E0%E5%BC%80%E5%A7%8B/" rel="tag">从0开始</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BC%98%E5%8C%96%E5%99%A8/" rel="tag">优化器</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" rel="tag">优化方法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%86%E7%B1%BB%E7%AE%97%E6%B3%95/" rel="tag">分类算法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" rel="tag">卷积神经网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD/" rel="tag">反向传播</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%9B%BE%E5%83%8F%E5%88%86%E7%B1%BB/" rel="tag">图像分类</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" rel="tag">学习记录</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%BA%8F%E5%88%97%E5%BB%BA%E6%A8%A1/" rel="tag">序列建模</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" rel="tag">数学基础</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" rel="tag">梯度下降</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%AD%A3%E5%88%99%E5%8C%96/" rel="tag">正则化</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6/" rel="tag">注意力机制</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" rel="tag">深度学习</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%82%BC%E4%B8%B9%E6%8A%80%E5%B7%A7/" rel="tag">炼丹技巧</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" rel="tag">神经网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" rel="tag">线性代数</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92/" rel="tag">线性回归</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%87%AA%E5%8A%A8%E6%B1%82%E5%AF%BC/" rel="tag">自动求导</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/" rel="tag">计算机视觉</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%BF%87%E6%8B%9F%E5%90%88/" rel="tag">过拟合</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%80%BB%E8%BE%91%E5%9B%9E%E5%BD%92/" rel="tag">逻辑回归</a></li></ul>
     </div>
   </div>
 
@@ -3281,7 +3477,7 @@ $$</p>
   <div class="widget-wrap">
     <h3 class="widget-title">标签云</h3>
     <div class="widget tagcloud">
-      <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0-%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C-%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0-ReLU/" style="font-size: 10px;">-机器学习 -深度学习 -神经网络 -激活函数 -ReLU</a> <a href="/tags/Adam/" style="font-size: 10px;">Adam</a> <a href="/tags/AdamW/" style="font-size: 10px;">AdamW</a> <a href="/tags/BatchNorm/" style="font-size: 10px;">BatchNorm</a> <a href="/tags/CNN/" style="font-size: 10px;">CNN</a> <a href="/tags/Dropout/" style="font-size: 10px;">Dropout</a> <a href="/tags/GPU%E5%8A%A0%E9%80%9F/" style="font-size: 10px;">GPU加速</a> <a href="/tags/LSTM/" style="font-size: 10px;">LSTM</a> <a href="/tags/NumPy/" style="font-size: 12.5px;">NumPy</a> <a href="/tags/PyTorch/" style="font-size: 15px;">PyTorch</a> <a href="/tags/Python/" style="font-size: 10px;">Python</a> <a href="/tags/RNN/" style="font-size: 10px;">RNN</a> <a href="/tags/SGD/" style="font-size: 10px;">SGD</a> <a href="/tags/Self-Attention/" style="font-size: 10px;">Self-Attention</a> <a href="/tags/Sigmoid/" style="font-size: 10px;">Sigmoid</a> <a href="/tags/Transformer/" style="font-size: 10px;">Transformer</a> <a href="/tags/scikit-learn/" style="font-size: 10px;">scikit-learn</a> <a href="/tags/%E4%BA%A4%E5%8F%89%E7%86%B5/" style="font-size: 10px;">交叉熵</a> <a href="/tags/%E4%BB%8E0%E5%BC%80%E5%A7%8B/" style="font-size: 10px;">从0开始</a> <a href="/tags/%E4%BC%98%E5%8C%96%E5%99%A8/" style="font-size: 10px;">优化器</a> <a href="/tags/%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" style="font-size: 10px;">优化方法</a> <a href="/tags/%E5%88%86%E7%B1%BB%E7%AE%97%E6%B3%95/" style="font-size: 10px;">分类算法</a> <a href="/tags/%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">卷积神经网络</a> <a href="/tags/%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD/" style="font-size: 10px;">反向传播</a> <a href="/tags/%E5%9B%BE%E5%83%8F%E5%88%86%E7%B1%BB/" style="font-size: 10px;">图像分类</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" style="font-size: 15px;">学习记录</a> <a href="/tags/%E5%BA%8F%E5%88%97%E5%BB%BA%E6%A8%A1/" style="font-size: 10px;">序列建模</a> <a href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" style="font-size: 12.5px;">数学基础</a> <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" style="font-size: 20px;">机器学习</a> <a href="/tags/%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" style="font-size: 12.5px;">梯度下降</a> <a href="/tags/%E6%AD%A3%E5%88%99%E5%8C%96/" style="font-size: 10px;">正则化</a> <a href="/tags/%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6/" style="font-size: 10px;">注意力机制</a> <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" style="font-size: 17.5px;">深度学习</a> <a href="/tags/%E7%82%BC%E4%B8%B9%E6%8A%80%E5%B7%A7/" style="font-size: 12.5px;">炼丹技巧</a> <a href="/tags/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">神经网络</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" style="font-size: 15px;">线性代数</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92/" style="font-size: 10px;">线性回归</a> <a href="/tags/%E8%87%AA%E5%8A%A8%E6%B1%82%E5%AF%BC/" style="font-size: 10px;">自动求导</a> <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/" style="font-size: 10px;">计算机视觉</a> <a href="/tags/%E8%BF%87%E6%8B%9F%E5%90%88/" style="font-size: 10px;">过拟合</a> <a href="/tags/%E9%80%BB%E8%BE%91%E5%9B%9E%E5%BD%92/" style="font-size: 10px;">逻辑回归</a>
+      <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0-%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C-%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0-ReLU/" style="font-size: 10px;">-机器学习 -深度学习 -神经网络 -激活函数 -ReLU</a> <a href="/tags/Adam/" style="font-size: 10px;">Adam</a> <a href="/tags/AdamW/" style="font-size: 10px;">AdamW</a> <a href="/tags/BatchNorm/" style="font-size: 10px;">BatchNorm</a> <a href="/tags/CNN/" style="font-size: 10px;">CNN</a> <a href="/tags/Dropout/" style="font-size: 10px;">Dropout</a> <a href="/tags/GPU%E5%8A%A0%E9%80%9F/" style="font-size: 10px;">GPU加速</a> <a href="/tags/LSTM/" style="font-size: 10px;">LSTM</a> <a href="/tags/NumPy/" style="font-size: 12px;">NumPy</a> <a href="/tags/PyTorch/" style="font-size: 16px;">PyTorch</a> <a href="/tags/Python/" style="font-size: 10px;">Python</a> <a href="/tags/RNN/" style="font-size: 10px;">RNN</a> <a href="/tags/SGD/" style="font-size: 10px;">SGD</a> <a href="/tags/Self-Attention/" style="font-size: 10px;">Self-Attention</a> <a href="/tags/Sigmoid/" style="font-size: 10px;">Sigmoid</a> <a href="/tags/Transformer/" style="font-size: 10px;">Transformer</a> <a href="/tags/ViT/" style="font-size: 10px;">ViT</a> <a href="/tags/Vision-Transformer/" style="font-size: 10px;">Vision Transformer</a> <a href="/tags/scikit-learn/" style="font-size: 10px;">scikit-learn</a> <a href="/tags/%E4%BA%A4%E5%8F%89%E7%86%B5/" style="font-size: 10px;">交叉熵</a> <a href="/tags/%E4%BB%8E0%E5%BC%80%E5%A7%8B/" style="font-size: 10px;">从0开始</a> <a href="/tags/%E4%BC%98%E5%8C%96%E5%99%A8/" style="font-size: 10px;">优化器</a> <a href="/tags/%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" style="font-size: 10px;">优化方法</a> <a href="/tags/%E5%88%86%E7%B1%BB%E7%AE%97%E6%B3%95/" style="font-size: 10px;">分类算法</a> <a href="/tags/%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">卷积神经网络</a> <a href="/tags/%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD/" style="font-size: 10px;">反向传播</a> <a href="/tags/%E5%9B%BE%E5%83%8F%E5%88%86%E7%B1%BB/" style="font-size: 10px;">图像分类</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/" style="font-size: 14px;">学习记录</a> <a href="/tags/%E5%BA%8F%E5%88%97%E5%BB%BA%E6%A8%A1/" style="font-size: 10px;">序列建模</a> <a href="/tags/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" style="font-size: 12px;">数学基础</a> <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" style="font-size: 20px;">机器学习</a> <a href="/tags/%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D/" style="font-size: 12px;">梯度下降</a> <a href="/tags/%E6%AD%A3%E5%88%99%E5%8C%96/" style="font-size: 10px;">正则化</a> <a href="/tags/%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6/" style="font-size: 12px;">注意力机制</a> <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" style="font-size: 18px;">深度学习</a> <a href="/tags/%E7%82%BC%E4%B8%B9%E6%8A%80%E5%B7%A7/" style="font-size: 12px;">炼丹技巧</a> <a href="/tags/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">神经网络</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0/" style="font-size: 14px;">线性代数</a> <a href="/tags/%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92/" style="font-size: 10px;">线性回归</a> <a href="/tags/%E8%87%AA%E5%8A%A8%E6%B1%82%E5%AF%BC/" style="font-size: 10px;">自动求导</a> <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/" style="font-size: 12px;">计算机视觉</a> <a href="/tags/%E8%BF%87%E6%8B%9F%E5%90%88/" style="font-size: 10px;">过拟合</a> <a href="/tags/%E9%80%BB%E8%BE%91%E5%9B%9E%E5%BD%92/" style="font-size: 10px;">逻辑回归</a>
     </div>
   </div>
 
@@ -3303,6 +3499,10 @@ $$</p>
       <ul>
         
           <li>
+            <a href="/2026/04/09/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%BA%94%EF%BC%89%EF%BC%9AVision%20Transformer/">机器学习基础（十五）：Vision Transformer</a>
+          </li>
+        
+          <li>
             <a href="/2026/04/08/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E5%9B%9B%EF%BC%89%EF%BC%9ATransformer%E4%B8%8E%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6/">机器学习基础（十四）：Transformer与注意力机制</a>
           </li>
         
@@ -3316,10 +3516,6 @@ $$</p>
         
           <li>
             <a href="/2026/04/04/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89%EF%BC%9A%E8%BF%87%E6%8B%9F%E5%90%88%E4%B8%8E%E6%AD%A3%E5%88%99%E5%8C%96/">机器学习基础（十一）：过拟合与正则化</a>
-          </li>
-        
-          <li>
-            <a href="/2026/04/03/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%EF%BC%88%E5%8D%81%EF%BC%89%EF%BC%9A%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9CCNN/">机器学习基础（十）：卷积神经网络CNN</a>
           </li>
         
       </ul>
